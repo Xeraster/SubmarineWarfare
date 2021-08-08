@@ -1,0 +1,7 @@
+name=Cargo
+desc=A cargo officer can watch all the cargo. Just to make sure it doesn't get lonely or something.
+#0 = damagecontrol. 1 = flak gunner. 2 = gunner. 3 = hacking
+#4 = helm. 5 = mechanic. 6 = medic. 7 = nuclear. 8 = radio
+#9 = science. 10 = scorcery. 11 = sex. 12 = torpedo. 13 = watch
+relevant_compartment=14
+texture=cargo.bmp

@@ -1,0 +1,7 @@
+name=Participation
+desc=Awarded for successfully surviving 1 (one) entire patrol without getting killed.
+texture=participation.bmp
+conditionId=0
+conditionAmount=1
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=0 

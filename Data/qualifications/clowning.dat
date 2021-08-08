@@ -1,0 +1,7 @@
+name=Clowning
+desc=A clowning certification holder is trained to be a more professional clown.
+#0 = damagecontrol. 1 = flak gunner. 2 = gunner. 3 = hacking
+#4 = helm. 5 = mechanic. 6 = medic. 7 = nuclear. 8 = radio
+#9 = science. 10 = scorcery. 11 = sex. 12 = torpedo. 13 = watch
+relevant_compartment=15
+texture=clowning.bmp

@@ -1,0 +1,39 @@
+name=Magic torpedo
+desc=A magic torpedo that has infinite range and never misses a target. Ever. It can think for itself and will sometimes pick a target other than what you intend.
+texture_folder=magic_torpedo
+mesh_low=torpedo.obj
+mesh_high=torpedo.obj
+#torpedos can be set at 3 different speeds. set a speed to -1 to disable it (i.e. if a torpedo will only have 1 or 2 speed settings)
+#units are in knots
+speed1=75
+speed2=-1
+speed3=-1
+#ranges which correspond to the speed
+#units are in meters
+range1=0
+range2=-1
+range3=-1
+arming_range=250
+#0 = torpedo that stays in the water. 1 = it flies in the air
+type=0
+has_wire=0
+#in tons. Yes, that means you can make nukes. Knock yourself out
+warheadTNTequivalent=1.0
+#guidance system. 0 = guided heading (straight line). 1 = passive acoustic homing. 3 = active sonar. 4 = heat-seeking. 5 = magic.
+guidance=5
+#0 = it only goes left and right. 1 = it can go left, right, up and down. Irrelevant for non-homing torpedos
+controlsurfaces=1
+#the deepest the torpedo can be before it gets crushed and stops working (in meters)
+crushdepth=5000
+#a turn speed of 1 is going to be the turning speed of a standard acoustic homing torpedo. No idea what units that will be in. I may or may not update this comment when I figure that out
+turnspeed=10.1
+cost=50000.12
+#true or false. Does it have magetic pistol?
+magnetic=1
+#will the warhead go off when it reaches the tdc's specified range? (bool) (used for the nuke)
+range_explode=0
+max_gyroangle=180.0
+#admin server alert if someone uses this in a multiplayer game (bool)
+server_alert=1
+#how many decibels the torpedo is in loudness. Higher values are easier to pick up on hydrophones
+loudness=64.5

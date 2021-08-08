@@ -1,0 +1,7 @@
+name=Endurance award
+desc=Awarded for spending 1 entire month on patrol.
+texture=badge5.bmp
+conditionId=5
+conditionAmount=30
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=0 

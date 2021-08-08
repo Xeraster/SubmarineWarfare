@@ -1,0 +1,7 @@
+name=Scorcery
+desc=A scorcerer can perform certain battle meditation actions and charms. Simply having a scorcerer around marginally decreases the amount of damage you take, probability of a torpedo miss and certain other things.
+#0 = damagecontrol. 1 = flak gunner. 2 = gunner. 3 = hacking
+#4 = helm. 5 = mechanic. 6 = medic. 7 = nuclear. 8 = radio
+#9 = science. 10 = scorcery. 11 = sex. 12 = torpedo. 13 = watch
+relevant_compartment=10
+texture=scorcery.bmp

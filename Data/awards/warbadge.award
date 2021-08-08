@@ -1,0 +1,7 @@
+name=Submarine War badge
+desc=Awarded to every crew member to be involved either directly or indirectly in the sinking or otherwise destruction of an enemy vessel.
+texture=badge2.bmp
+conditionId=3
+conditionAmount=1
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=0 

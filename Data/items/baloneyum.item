@@ -1,0 +1,30 @@
+crafting
+name=Baloneium
+desc=Weapons grade baloneium. Dangerous stuff. Mixing with mayonaisium could create a neutrino explosion that could destroy the entire observable universe. Luckily, mayonausium is the 2nd rarest element in existence, so good luck getting your hands on some. Baloneium has no known use or application.. there must be SOMETHING it's good for..
+#type or additional info (string)
+desc2=A rather useless element. Has no known uses. Mixing with mayonaisium can produce universe-destroying explosions though.
+#amperage (or other relevant stat. in this case nutrition)
+relevantstat=1
+#cost
+cost=300
+#max stack size (int)
+stacksize=75
+#package weight (double, in grams)
+weight=1000
+#rarity (0 = abundant. 1 = common. 2 = uncommon. 3 = rare. 4 = legendary. 5 = one of a kind)
+rarity=3
+#texture name
+texture=baloney.bmp
+#class specific info
+#is metal (bool)
+is_magic=0
+#is semiconductor (bool)
+is_semiconductor=0
+#is magic (bool)
+is_magic=0
+#is radioactive (bool)
+is_radioactive=0
+#state of matter (int)
+stateofmatter=0
+#metallic strength (double)
+metallicstrength=100

@@ -1,0 +1,24 @@
+food
+name=banana
+desc=a yellow fruit high in potassium
+#type or additional info (string)
+desc2=can also be used as: a dildo
+#amperage (or other relevant stat. in this case nutrition)
+relevantstat=1
+#cost
+cost=3
+#max stack size (int)
+stacksize=75
+#package weight (double, in grams)
+weight=118
+#rarity (0 = abundant. 1 = common. 2 = uncommon. 3 = rare. 4 = legendary. 5 = one of a kind)
+rarity=3
+#texture nake
+texture=banana.bmp
+#class specific info
+#preferability (-2 - 2)
+preferability=1
+#nutrition (double)
+nutrition=1.0
+#isHumanMeat (bool)
+humanmeat=0

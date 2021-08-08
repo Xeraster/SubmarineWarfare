@@ -1,0 +1,22 @@
+drug
+name=ebola vaccine
+desc=a syringe filled with an ebola vaccine
+#type or additional info (string)
+desc2=contains ebola. 1 use = 12 years of ebola immunity
+#amperage (or other relevant stat. in this case nutrition)
+relevntstat=1
+#cost
+cost=200
+#max stack size (int)
+stacksize=75
+#package weight (double, in grams)
+weight=50
+#rarity (0 = abundant. 1 = common. 2 = uncommon. 3 = rare. 4 = legendary. 5 = one of a kind)
+rarity=3
+#texture name
+texture=vaccine.bmp
+#class specific info
+#use type (0 = medical, 1 = recreational. 2 = both)
+usetype=0
+#amount (in grams, double)
+activeamount=0.25

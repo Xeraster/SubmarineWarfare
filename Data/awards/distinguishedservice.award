@@ -1,0 +1,7 @@
+name=Distinguished service award
+desc=Presented to those who have distinguished themselves by exceptionally meritorious service in a duty of great responsibility.
+texture=badge3.bmp
+conditionId=9
+conditionAmount=2
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=1

@@ -1,0 +1,7 @@
+name=Employee of the Month
+desc=Employee of the month award - awarded for exceeding job expectations.
+texture=eom.bmp
+conditionId=9
+conditionAmount=10
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=1

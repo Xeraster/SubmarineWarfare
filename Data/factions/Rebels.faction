@@ -1,0 +1,10 @@
+name=Rebels of Greenland
+desc=After winning their independence from Denmark in 2308, the Rebels of Greenland was founded.
+#0 = friendly, 1 = neutral, 3 = hostile, 4 = lawless
+team=0
+#texture name of their flag
+flag=Rebels.png
+#has submarines? (bool). 0 = no. 1 = yes
+submarines=1
+#types of ships they use. 0 = age of sail. 1 = old junk. 2 = medium. 3 = advanced. 4 = all and at random
+shipTier=1

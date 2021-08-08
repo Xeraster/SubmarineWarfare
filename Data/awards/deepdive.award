@@ -1,0 +1,7 @@
+name=Deep Dive award
+desc=Awarded for diving to a depth below 300 meters.
+texture=badge7.bmp
+conditionId=8
+conditionAmount=301
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=0 

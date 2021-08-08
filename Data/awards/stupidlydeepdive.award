@@ -1,0 +1,7 @@
+name=Abyssal Deep Dive award
+desc=Awarded for diving to a depth below 10000 meters.
+texture=badge9.bmp
+conditionId=8
+conditionAmount=10001
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=0

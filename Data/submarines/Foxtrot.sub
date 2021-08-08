@@ -1,0 +1,173 @@
+name=Foxtrot
+desc=a class of Soviet diesel electric submarine
+#texture folder name
+texture=Foxtrot
+#low quality mesh
+mesh_low=foxtrot.obj
+#high quality mesh
+mesh_high=foxtrot.obj
+#top speed surfaced (knots)
+surf_speed=16
+#top speed submerged (knots)
+submerged_speed=15
+#acceleration in knots per second squared
+acceleration=0.3
+#tier 0 = potato. 1 = ww2 capability. 2 = early cold war. 3 = late cold war and modern. 4 = advanced futuristic
+tier=2
+#Length (meters):	
+length=76.6
+#Beam (meters)	
+beam=6.7
+#Draught (meters)	
+draught=5.2
+#displacement tonns (type 7 is 769)
+disp=1475
+#nautical miles per gallon of fuel (type 7 is 9.8)
+fuel_mpg=5
+#propulsion type 0 = electic & disel. 1 = electric and diesel where diesel is only used for battery charging and not propulsion. 3 = nuclear
+power_type=0
+#range (nautical miles), at (speed in knots)
+range=9000
+#gallons of fuel
+fuel_capacity=4736
+#amp hours (type 7 has 6940-9160)
+bat_amphours=34808
+#electric range at 1/4th submerged top speed (in nautical miles)
+bat_range=380
+#Complement (sailors, pettyofficers, officers)
+sailors=56
+pos=12
+officers=10
+#num bow torpedo tubes
+bow_tubes=6
+#num stern torpedo tubes
+stern_tubes=2
+#front torpedo reserve
+bow_reserve=12
+#rear torpedo reserve
+stern_reserve=2
+#nuclear output (in MW)
+nuke_pwr=15
+#num years per fuel rod
+nuke_efficiency=35
+#can be upgraded to nuclear (bool)
+can_have_nuclear=1
+#can have oxygen generator retrofit (int. 0 = no, 1 = yes, 2 = yes, by default)
+oxygen_gen=1
+#can have passive sonar (int. 0 = no, 1 = yes, 2 = yes, by default)
+passive_sonar=2
+#can have active sonar
+active_sonar=2
+#can have radar (int. 0 = no, 1 = yes, 2 = yes, by default)
+radar=1
+#can have lidar (int. 0 = no, 1 = yes, 2 = yes, by default)
+lidar=1
+#can have snorkel (int. 0 = no, 1 = yes, 2 = yes, by default)
+snorkel=1
+#speed multiplier when using diesels underwater(double)
+diesels_mult_water=0.5
+#submarine size (for upgrade part compatibility checks. options are 0 = small. 1 = medium. 3 = large)
+submarine_size=2
+#can have deck gun (bool)
+deckgun=0
+#deck gun screen position (x,y)
+deckgunX=0
+deckgunY=0
+#cost
+cost=50000000
+#crush depth
+max_depth=320
+#test depth
+safe_depth=295
+#how long (in days) can the ship provide breathable air to a full complement of crew
+air_amount=5.00
+#cargo space (how many inventory slots)
+cargo=100
+#compartment data (5 lines per room)
+#display name
+#room type 0=bow torpedo. 1=stern torpedo. 2=diesel engines. 3=electric engines. 4=crew quarters. 5=command room. 6=radio room. 7=cargo. 8=stripper pole. 9=science lab. 10=nuclear reactor
+#crew (total number of crew slots)
+#officers
+#manpower to run (defined as: how many well-rested level 5 seamen does it take to run at the room's maximum efficiency)
+#texture pos x
+#texture pos y
+#
+compartment
+bow torpedo
+0
+20
+1
+15.5
+792
+145
+#
+compartment
+bow crew quarters
+4
+20
+0
+1
+633
+144
+#
+compartment
+command room
+5
+7
+3
+8
+533
+145
+#
+#
+compartment
+radio room
+6
+2
+0
+6
+489
+147
+#
+compartment
+stern crew quarters
+14
+20
+0
+1
+369
+144
+#
+#
+compartment
+diesel engine room
+2
+20
+0
+12
+267
+151
+#
+#
+compartment
+electric engines
+3
+20
+6
+12
+158
+157
+#
+#
+compartment
+stern torpedo
+1
+15
+0
+10
+47
+168
+#
+#be sure to put "end" at the end of submarine files.
+#the end keyword needs to always be 1 uncommented line under the last compartment entry
+end

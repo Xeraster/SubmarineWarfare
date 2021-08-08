@@ -1,0 +1,25 @@
+upgrade_part
+name=High capacity oxygen generator
+desc=An oxygen generator that uses electricity to convert water (or other liquids containing oxygen) into breathable air.
+#type or additional info (string)
+desc2=Can provide a constant supply of breathable air to up to 40 crew.
+#amperage (relevant stat variable)
+relevantstat=40
+secondstat=1.0
+thirdstat=1.0
+#cost
+cost=225000
+#max stack size (int)
+stacksize=75
+#package weight (double, in grams)
+weight=5000
+#rarity (0 = abundant. 1 = common. 2 = uncommon. 3 = rare. 4 = legendary. 5 = one of a kind)
+rarity=3
+#texture name
+texture=oxygen2.png
+#class-specific stats
+#upgrade type //0 = battery. 1 = diesel engine. 2 = electric engine. 3 = nuclear. 4 = fuel tank. 5 = oxygen generator. 
+#6 = radar. 7 = lidar. 8 = sonar. 9 = hydrophone. 10 = deck gun. 11 = hull strength. 12 = detection related. 13 = fun
+upgradetype=5
+#compatible sub size (-1= doesnt matter, 0 = small. 1 = medium. 2 = large)
+compatiblesub=-1

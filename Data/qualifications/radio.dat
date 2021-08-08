@@ -1,0 +1,7 @@
+name=Sonar
+desc=A sonar qualification holder is more effective at any of the jobs peformed in the radio room. This includes radio, sonar, radar and more.
+#0 = damagecontrol. 1 = flak gunner. 2 = gunner. 3 = hacking
+#4 = helm. 5 = mechanic. 6 = medic. 7 = nuclear. 8 = radio
+#9 = science. 10 = scorcery. 11 = sex. 12 = torpedo. 13 = watch
+relevant_compartment=8
+texture=radio.bmp

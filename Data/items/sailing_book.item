@@ -1,0 +1,24 @@
+skill
+name=sailing for beginners.
+desc=a book about sailing. Not very useful on a submarine but a complete beginner may learn a few useful skills and terminology from reading this.
+#type or additional info (string)
+desc2=a book about sailing
+#amperage (or other relevant stat. in this case nutrition)
+relevantstat=1
+#cost
+cost=3
+#max stack size (int)
+stacksize=75
+#package weight (double, in grams)
+weight=1000
+#rarity (0 = abundant. 1 = common. 2 = uncommon. 3 = rare. 4 = legendary. 5 = one of a kind)
+rarity=1
+#texture name
+texture=book.bmp
+#class specific info
+#skill improved (0 = seafaring, 1 = magic. 2 = wizarding. 3 = sex)
+skillimproved=0
+#min skill
+minskill=0
+#max skill
+maxskill=2

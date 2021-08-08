@@ -1,0 +1,7 @@
+name=Extreme Long Distance award
+desc=Awarded for travelling 1,000,000 miles at sea.
+texture=badge1.bmp
+conditionId=4
+conditionAmount=1000000
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=0 

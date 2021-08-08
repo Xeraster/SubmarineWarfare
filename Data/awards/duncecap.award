@@ -1,0 +1,7 @@
+name=Dunce Cap
+desc=An "award" given to those who contributed towards having an unsucessful patrol.
+texture=dunce.bmp
+conditionId=9
+conditionAmount=12
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=1

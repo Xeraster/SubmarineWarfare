@@ -1,0 +1,7 @@
+name=Employee of the Year
+desc=A yearly award given out to someone who worked hard enough to be called employee of the year.
+texture=eoy.bmp
+conditionId=9
+conditionAmount=9
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=1

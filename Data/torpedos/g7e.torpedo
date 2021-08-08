@@ -1,0 +1,39 @@
+name=G7e guided torpedo 
+desc=A basic electric torpedo. It runs in a straight line at a given heading and usually explodes if it hits something. This particular variant can go faster and has better range than the original g7e torpedos from back in the day.
+texture_folder=g7e
+mesh_low=torpedo.obj
+mesh_high=torpedo.obj
+#torpedos can be set at 3 different speeds. set a speed to -1 to disable it (i.e. if a torpedo will only have 1 or 2 speed settings)
+#units are in knots
+speed1=30
+speed2=40
+speed3=44
+#ranges which correspond to the speed
+#units are in meters
+range1=7500
+range2=4500
+range3=4000
+arming_range=250
+#0 = torpedo that stays in the water. 1 = it flies in the air
+type=0
+has_wire=0
+#in tons. Yes, that means you can make nukes. Knock yourself out
+warheadTNTequivalent=0.33
+#guidance system. 0 = guided heading (straight line). 1 = passive acoustic homing. 3 = active sonar. 4 = heat-seeking. 5 = magic.
+guidance=0
+#0 = it only goes left and right. 1 = it can go left, right, up and down. Irrelevant for non-homing torpedos
+controlsurfaces=0
+#the deepest the torpedo can be before it gets crushed and stops working (in meters)
+crushdepth=100
+#a turn speed of 1 is going to be the turning speed of a standard acoustic homing torpedo. No idea what units that will be in. I may or may not update this comment when I figure that out
+turnspeed=1.1
+cost=1000.12
+#true or false. Does it have magetic pistol?
+magnetic=0
+#will the warhead go off when it reaches the tdc's specified range? (bool) (used for the nuke)
+range_explode=0
+max_gyroangle=160.5
+#admin server alert if someone uses this in a multiplayer game (bool)
+server_alert=0
+#how many decibels the torpedo is in loudness. Higher values are easier to pick up on hydrophones
+loudness=90.3

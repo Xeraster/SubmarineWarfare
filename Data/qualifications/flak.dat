@@ -1,0 +1,7 @@
+name=Flak
+desc=A skilled flak gunner is most effective at hitting fast-moving targets with a mounted machine gun.
+#0 = damagecontrol. 1 = flak gunner. 2 = gunner. 3 = hacking
+#4 = helm. 5 = mechanic. 6 = medic. 7 = nuclear. 8 = radio
+#9 = science. 10 = scorcery. 11 = sex. 12 = torpedo. 13 = watch
+relevant_compartment=1
+texture=flak_gunner.bmp

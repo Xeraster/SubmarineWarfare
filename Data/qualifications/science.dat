@@ -1,0 +1,7 @@
+name=Science
+desc=Scientists are best for peforming research to unlock new technologies. A skilled scientist can research faster than your boat clown so pick someone smart for this job.
+#0 = damagecontrol. 1 = flak gunner. 2 = gunner. 3 = hacking
+#4 = helm. 5 = mechanic. 6 = medic. 7 = nuclear. 8 = radio
+#9 = science. 10 = scorcery. 11 = sex. 12 = torpedo. 13 = watch
+relevant_compartment=9
+texture=science.bmp

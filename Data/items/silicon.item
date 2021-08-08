@@ -1,0 +1,30 @@
+crafting
+name=silicon
+desc=Silicon is a semiconductor which can also be used to make fake boobs. Stonks!
+#type or additional info (string)
+desc2haha silicon can maek boobs lol funni cuz sex
+#amperage (or other relevant stat. in this case nutrition)
+revevantstat=1
+#cost
+cost=3
+#max stack size (int)
+stacksize=75
+#package weight (double, in grams)
+weight=1000
+#rarity (0 = abundant. 1 = common. 2 = uncommon. 3 = rare. 4 = legendary. 5 = one of a kind)
+rarity=1
+#texture name
+texture=silicon.bmp
+#class specific info
+#is metal (bool)
+is_metal=0
+#is semiconductor (bool)
+is_semiconductor=1
+#is magic (bool)
+is_magic=1
+#is radioactive (bool)
+is_radioactive=0
+#state of matter (int)
+stateofmatter=0
+#metallic strength (double)
+metallicstrength=10

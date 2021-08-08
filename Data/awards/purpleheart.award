@@ -1,0 +1,7 @@
+name=Purple Heart
+desc=Awarded to anyone who got seriously injured on the job.
+texture=badge2.bmp
+conditionId=2
+conditionAmount=1
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=0 

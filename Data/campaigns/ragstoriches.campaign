@@ -1,0 +1,14 @@
+name=Rags to Riches
+desc=Start off with a terribly awful submarine and a small amount of money. Do you have what it takes to work your way to the top?
+faction=Federation
+planet=Earth
+#starting funds
+money=10000
+#starting payrate. (as in dollar per tonnage sunk). For example if your payrate is 1.20 and you sink 5000 tons in a patrol, your tonnage sunk payout will be 6000
+payrate=1.50 
+#9 = chief officer and is the lowest "upper" rank.
+startingrank=9
+#if startingbase = 0, starting location is random. if starting base is a string of some kind, the starting base is that same location
+startingbase=0
+#string name of starting submarine
+submarine=Holland

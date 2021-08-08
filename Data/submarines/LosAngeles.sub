@@ -1,0 +1,193 @@
+name=Los Angeles
+desc=a nuclear attack submarine
+#texture folder name
+texture=LosAngeles
+#low quality mesh
+mesh_low=losangeles.obj
+#high quality mesh
+mesh_high=losangelses.obj
+#top speed surfaced (knots)
+surf_speed=33
+#top speed submerged (knots)
+submerged_speed=33
+#acceleration in knots per second squared
+acceleration=0.9
+#tier 0 = potato. 1 = ww2 capability. 2 = early cold war. 3 = late cold war and modern. 4 = advanced futuristic
+tier=3
+#Length (meters):	
+length=110
+#Beam (meters)	
+beam=10
+#Draught (meters)	
+draught=9.4
+#displacement tonns (type 7 is 769)
+disp=6927
+#nautical miles per gallon of fuel (type 7 is 9.8)
+fuel_mpg=-1
+#propulsion type 0 = electic & disel. 1 = electric and diesel where diesel is only used for battery charging and not propulsion. 3 = nuclear
+power_type=2
+#range (nautical miles), at (speed in knots)
+range=-1
+#gallons of fuel
+fuel_capacity=0
+#amp hours (type 7 has 6940-9160)
+bat_amphours=15000
+#electric range at 1/4th submerged top speed (in nautical miles)
+bat_range=120
+#Complement (sailors, pettyofficers, officers)
+sailors=32
+pos=12
+officers=10
+#num bow torpedo tubes
+bow_tubes=4
+#num stern torpedo tubes
+stern_tubes=0
+#front torpedo reserve
+bow_reserve=33
+#rear torpedo reserve
+stern_reserve=0
+#nuclear output (in MW)
+nuke_pwr=500
+#num years per fuel rod
+nuke_efficiency=35
+#can be upgraded to nuclear (bool)
+can_have_nuclear=1
+#can have oxygen generator retrofit (int. 0 = no, 1 = yes, 2 = yes, by default)
+oxygen_gen=1
+#can have passive sonar (int. 0 = no, 1 = yes, 2 = yes, by default)
+passive_sonar=2
+#can have active sonar
+active_sonar=2
+#can have radar (int. 0 = no, 1 = yes, 2 = yes, by default)
+radar=2
+#can have lidar (int. 0 = no, 1 = yes, 2 = yes, by default)
+lidar=2
+#can have snorkel (int. 0 = no, 1 = yes, 2 = yes, by default)
+snorkel=0
+#speed multiplier when using diesels underwater(double)
+diesels_mult_water=1.0
+#submarine size (for upgrade part compatibility checks. options are 0 = small. 1 = medium. 3 = large)
+submarine_size=3
+#can have deck gun (bool)
+deckgun=0
+#deck gun screen position (x,y)
+deckgunX=0
+deckgunY=0
+#cost
+cost=50000000
+#crush depth
+max_depth=366
+#test depth
+safe_depth=300
+#how long (in days) can the ship provide breathable air to a full complement of crew
+air_amount=90
+#cargo space (how many inventory slots)
+cargo=300
+#compartment data (5 lines per room)
+#display name
+#room type 0=bow torpedo. 1=stern torpedo. 2=diesel engines. 3=electric engines. 4=crew quarters. 5=command room. 6=radio room. 7=cargo. 8=stripper pole. 9=science lab. 10=nuclear reactor
+#crew (total number of crew slots)
+#officers
+#manpower to run (defined as: how many well-rested level 5 seamen does it take to run at the room's maximum efficiency)
+#texture pos x
+#texture pos y
+#
+compartment
+torpedo room
+0
+18
+1
+25.5
+1239
+153
+#
+compartment
+strip club
+8
+6
+0
+1
+1132
+152
+#
+compartment
+crew quarters
+4
+20
+3
+1
+856
+185
+#
+#
+compartment
+cargo hold
+7
+4
+0
+2
+1050
+218
+#
+compartment
+radio room
+6
+4
+0
+10
+1047
+151
+#
+#
+compartment
+command room
+5
+5
+3
+10
+856
+151
+#
+#
+compartment
+witchcraft room
+13
+3
+0
+12
+964
+218
+#
+#
+compartment
+research lab
+9
+2
+0
+10
+856
+218
+#
+#
+compartment
+reactor
+10
+4
+0
+12
+768
+151
+#
+#
+compartment
+engine room
+3
+18
+6
+25
+126
+151
+#
+#be sure to put "end" at the end of submarine files.
+#the end keyword needs to always be 1 uncommented line under the last compartment entry
+end

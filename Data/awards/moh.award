@@ -1,0 +1,7 @@
+name=Medal of Honor
+desc=The highest and most prestigious military decoration that may be awarded to recognize servicemembers who have repeatedly distinguished themselves by acts of valor.
+texture=moh.bmp
+conditionId=10
+conditionAmount=0
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=0

@@ -1,0 +1,10 @@
+name=Rouge Amish
+desc=The Rouge Amish want to take over the world and will do so by force if neccesary. The only problem is that being amish, they don't believe in using technology and are trying to take over the world with wooden sailboats and black powder cannons.
+#0 = friendly, 1 = neutral, 3 = hostile, 4 = lawless
+team=4
+#texture name of their flag
+flag=Amish.png
+#has submarines? (bool). 0 = no. 1 = yes
+submarines=0
+#types of ships they use. 0 = age of sail. 1 = old junk. 2 = medium. 3 = advanced. 4 = all and at random
+shipTier=0

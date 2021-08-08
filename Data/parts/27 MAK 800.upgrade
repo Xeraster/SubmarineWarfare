@@ -1,0 +1,22 @@
+upgrade_part
+name=27 MAK 800
+desc=higher capacity batteries
+#type or additional info (string)
+desc2=124 cells lead-acid
+#amperage
+relevantstat=8480
+#cost
+cost=5000
+#max stack size (int)
+stacksize=75
+#package weight (double, in grams)
+weight=100000
+#rarity (0 = abundant. 1 = common. 2 = uncommon. 3 = rare. 4 = legendary. 5 = one of a kind)
+rarity=1
+#texture name
+texture=battery.bmp
+#class-specific stats
+#upgrade type (see upgradePart class comments for more info)
+upgradetype=0
+#compatible sub size (-1= doesnt matter, 0 = small. 1 = medium. 2 = large)
+compatiblesub=1

@@ -1,0 +1,140 @@
+name=Mahecha
+desc=A popular low-cost design often used by smugglers, originally designed by the Mahecha drug ring. Abysmal underwater performance but it's the cheapest submarine that can be fitted with sonar and hydrophones.
+#texture folder name
+texture=AS-29
+#low quality mesh
+mesh_low=as29.obj
+#high quality mesh
+mesh_high=as29.obj
+#top speed surfaced (knots)
+surf_speed=11
+#top speed submerged (knots)
+submerged_speed=5
+#acceleration in knots per second squared
+acceleration=0.3
+#tier 0 = potato. 1 = ww2 capability. 2 = early cold war. 3 = late cold war and modern. 4 = advanced futuristic
+tier=0
+#Length (meters):	
+length=22.25
+#Beam (meters)	
+beam=5
+#Draught (meters)	
+draught=3.5
+#displacement tonns (type 7 is 769)
+disp=82
+#nautical miles per gallon of fuel (type 7 is 9.8)
+fuel_mpg=16
+#propulsion type 0 = electic & disel. 1 = electric and diesel where diesel is only used for battery charging and not propulsion. 3 = nuclear
+power_type=0
+#range (nautical miles), at (speed in knots)
+range=4400
+#gallons of fuel
+fuel_capacity=123
+#amp hours (type 7 has 6940-9160)
+bat_amphours=2000
+#electric range at 1/4th submerged top speed (in nautical miles)
+bat_range=40
+#Complement (sailors, pettyofficers, officers)
+sailors=4
+pos=2
+officers=2
+#num bow torpedo tubes
+bow_tubes=1
+#num stern torpedo tubes
+stern_tubes=0
+#front torpedo reserve
+bow_reserve=4
+#rear torpedo reserve
+stern_reserve=0
+#nuclear output (in MW)
+nuke_pwr=0.005
+#num years per fuel rod
+nuke_efficiency=15
+#can be upgraded to nuclear (bool)
+can_have_nuclear=1
+#can have oxygen generator retrofit (int. 0 = no, 1 = yes, 2 = yes, by default)
+oxygen_gen=1
+#can have passive sonar (int. 0 = no, 1 = yes, 2 = yes, by default)
+passive_sonar=1
+#can have active sonar
+active_sonar=0
+#can have radar (int. 0 = no, 1 = yes, 2 = yes, by default)
+radar=0
+#can have lidar (int. 0 = no, 1 = yes, 2 = yes, by default)
+lidar=0
+#can have snorkel (int. 0 = no, 1 = yes, 2 = yes, by default)
+snorkel=0
+#speed multiplier when using diesels underwater(double)
+diesels_mult_water=1.0
+#submarine size (for upgrade part compatibility checks. options are 0 = small. 1 = medium. 3 = large)
+submarine_size=0
+#can have deck gun (bool)
+deckgun=0
+#deck gun screen position (x,y)
+deckgunX=0
+deckgunY=0
+#cost
+cost=75000
+#crush depth
+max_depth=45
+#test depth
+safe_depth=38
+#how long (in days) can the ship provide breathable air to a full complement of crew
+air_amount=1.2
+#cargo space (how many inventory slots)
+cargo=30
+#compartment data (5 lines per room)
+#display name
+#room type 0=bow torpedo. 1=stern torpedo. 2=diesel engines. 3=electric engines. 4=crew quarters. 5=command room. 6=radio room. 7=cargo. 8=stripper pole. 9=science lab. 10=nuclear reactor
+#crew (total number of crew slots)
+#officers
+#manpower to run (defined as: how many well-rested level 5 seamen does it take to run at the room's maximum efficiency)
+#texture pos x
+#texture pos y
+#
+compartment
+torpedo room
+0
+4
+1
+8
+573
+92
+#
+compartment
+command room
+5
+3
+0
+6
+464
+93
+#
+compartment
+radio room
+6
+2
+0
+7
+396
+93
+compartment
+crew quarters
+4
+6
+0
+1
+259
+93
+compartment
+engine room
+2
+4
+1
+2
+89
+93
+#
+#be sure to put "end" at the end of submarine files.
+#the end keyword needs to always be 1 uncommented line under the last compartment entry
+end

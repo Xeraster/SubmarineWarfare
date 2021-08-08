@@ -1,0 +1,7 @@
+name=Extreme Endurance award
+desc=Awarded for spending 6 continuous months on patrol.
+texture=badge6.bmp
+conditionId=5
+conditionAmount=180
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=0 

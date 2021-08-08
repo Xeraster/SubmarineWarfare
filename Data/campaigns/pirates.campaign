@@ -1,0 +1,14 @@
+name=Drug Pirates
+desc=The world governments have started a global offensive to eradicate drug smuggling shipping. Take command of a pirate attack submarine and sink destroyers before they stop all the cocaine shipments.
+faction=Pirates
+planet=Earth
+#starting funds
+money=20000
+#starting payrate. (as in dollar per tonnage sunk). For example if your payrate is 1.20 and you sink 5000 tons in a patrol, your tonnage sunk payout will be 6000
+payrate=4.20
+#9 = chief officer and is the lowest "upper" rank.
+startingrank=9
+#if startingbase = 0, starting location is random. if starting base is a string of some kind, the starting base is that same location
+startingbase=0
+#string name of starting submarine
+submarine=Mahecha

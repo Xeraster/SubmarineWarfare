@@ -1,0 +1,7 @@
+name=Superior Service
+desc=Awarded to servicemembers who perform superior meritorious service in a position of significant responsibility.
+texture=superiorservice.bmp
+conditionId=9
+conditionAmount=4
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=1

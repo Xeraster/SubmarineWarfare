@@ -1,0 +1,7 @@
+name=Extreme Deep Dive award
+desc=Awarded for diving to a depth below 3000 meters.
+texture=badge8.bmp
+conditionId=8
+conditionAmount=3001
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=0

@@ -1,0 +1,7 @@
+name=Torpedo
+desc=A torpedo qualification increases the effectiveness of that person when working in the torpedo room. Higher torpedo skill allows torpedos to get reloaded faster.
+#0 = damagecontrol. 1 = flak gunner. 2 = gunner. 3 = hacking
+#4 = helm. 5 = mechanic. 6 = medic. 7 = nuclear. 8 = radio
+#9 = science. 10 = scorcery. 11 = sex. 12 = torpedo. 13 = watch
+relevant_compartment=12
+texture=torpedo.bmp

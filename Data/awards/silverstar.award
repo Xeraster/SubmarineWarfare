@@ -1,0 +1,7 @@
+name=Silver Star
+desc=Awarded for gallantry in action against an enemy of [faction_name].
+texture=silverstar.bmp
+conditionId=9
+conditionAmount=3
+#0 means the game automatically issues the award. 1 means the player has to do it
+playerIssued=1
