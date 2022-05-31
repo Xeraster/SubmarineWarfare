@@ -34,6 +34,14 @@ color *colorArray = new color[6];
 //random number generator
 uint32_t betterRand(uint32_t seed);
 
+SDL_Texture* loadTextureToRam(string texturePath, SDL_Renderer *ren);
+
+//load texture into ram with texture access flag
+SDL_Texture* loadTextureToRam_TA(string texturePath, SDL_Renderer* ren);
+
+//get color of pixel as pos x,y on a texture access stream enabled texture
+color pixelAtPos(SDL_Texture *tex, SDL_Renderer* ren, SDL_Window* win, int x, int y);
+
 //renders a texture to a position on the screen
 void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y);
 
@@ -105,7 +113,7 @@ color colorByteToRGB(short stupidColor);
 
 bool stringToBool(string input)
 {
-	if (input == "0") return false;
+	if (input == "0" || input == "false") return false;
 	else return true;
 }
 
@@ -161,6 +169,18 @@ coloredString lessOrBigger(double original, double compare, int decimalPlaces = 
 
 //a 2d collision function. Mainly used for gui mouse collisions but suitable for probably every possible 2d box collision use
 bool isColliding2D(int posX, int posY, int sizeX, int sizeY, int mouseX, int mouseY);
+
+//converts a string to a number that can be used for a seed
+int numberFromString(string input);
+
+//======================================================
+//	save stuff
+//======================================================
+void writeElement(XMLElement *baseElement, string elementName, string elementValue);
+void writeElement(XMLElement *baseElement, string elementName, int elementValue);
+void writeElement(XMLElement *baseElement, string elementName, bool elementValue);
+void writeElement(XMLElement *baseElement, string elementName, double elementValue);
+void writeElement(XMLElement *baseElement, string elementName, float elementValue);
 
 //TTF_Font* Sans;
 

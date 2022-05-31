@@ -334,6 +334,12 @@ void loadMenuTextures(SDL_Renderer *ren, int menuQuality)
 		v++;
 	}
 
+	//all the in game menu ui stuff here
+	
+
+	loadIngameSpecificTextures(ren);
+
+
 	//load misc stuff like button icons
 	loadGuiGizmos(ren);
 
@@ -397,6 +403,23 @@ void drawMainMenu(SDL_Renderer *ren, int screenSizeX, int screenSizeY)
 		//showMainMenu = returnToMainMenu.draw(ren, mouseX, mouseY, lastMouse);
 		drawSettingsScreen(ren, screenSizeX, screenSizeY, mouseX, mouseY, lastMouse);
 	}
+	//multiplayer screen
+	else if (multiplayerMenu)
+	{
+		showMainMenu = false;
+
+		//recycle the new campaign back button to go back to main menu. It's the same anyway.
+		showMainMenu = newCampaignBackButton.draw(ren, mouseX, mouseY, lastMouse);
+		multiplayerMenu = !showMainMenu;
+
+	}
+	//the screen you get when clicking the "load game" button on the main menu
+	else if (loadGameScreen)
+	{
+		showMainMenu = false;
+		showMainMenu = newCampaignBackButton.draw(ren, mouseX, mouseY, lastMouse);
+		drawLoadGameStuff(ren, mouseX, mouseY, lastMouse);
+	}
 
 	else if (campaignBaseScreen)
 	{
@@ -448,8 +471,26 @@ void drawMainMenu(SDL_Renderer *ren, int screenSizeX, int screenSizeY)
 			if (returnToMainMenu.draw(ren, mouseX, mouseY, lastMouse))
 			{
 				preliminaryMissionStartScreen = false;
+				enable3D = false;
+				campaignBaseScreen = true;
 			}
+
+			//im recycling the start new campaign start button because it's already the correct size and in the correct screen scaled position
+			if (startNewCampaign.draw(ren, mouseX, mouseY, lastMouse))
+			{
+				//preliminaryMissionStartScreen = false;
+				enable3D = true;
+				ingameMenus = true;
+				campaignBaseScreen = false;
+			}
+
+			drawPeliminaryMissionStartScreen(ren, mouseX, mouseY, lastMouse);
 		}
+	}
+
+	else if (ingameMenus)
+	{
+		beIngame(ren, mouseX, mouseY, lastMouse);
 	}
 
 	if (showMainMenu)
@@ -457,6 +498,8 @@ void drawMainMenu(SDL_Renderer *ren, int screenSizeX, int screenSizeY)
 		//this screen is shown when the player has initially started the game and the loading screen finishes
 		newCampaignScreen = false;
 		showSettings = false;
+		loadGameScreen = false;
+		loadedSaves = false;
 		//renderTextureEx doesn't cause THAT bad of a performance hit..
 		renderTextureEx(background, ren, 0, 0, gscreenx, gscreeny, 0);
 
@@ -467,9 +510,9 @@ void drawMainMenu(SDL_Renderer *ren, int screenSizeX, int screenSizeY)
 
 		drawRectFilled(ren, menuBackgroundColor, 20, 200, 300, 375);
 		newGameButton.draw(ren, mouseX, mouseY, lastMouse, newCampaignScreen);
-		loadGameButton.draw(ren, mouseX, mouseY, lastMouse);
+		loadGameButton.draw(ren, mouseX, mouseY, lastMouse, loadGameScreen);
 		singleMission.draw(ren, mouseX, mouseY, lastMouse);
-		multiplayer.draw(ren, mouseX, mouseY, lastMouse);
+		multiplayer.draw(ren, mouseX, mouseY, lastMouse, multiplayerMenu);
 		missionEditor.draw(ren, mouseX, mouseY, lastMouse);
 		showSettings = settings.draw(ren, mouseX, mouseY, lastMouse);
 		quitGame.draw(ren, mouseX, mouseY, lastMouse);
@@ -968,4 +1011,276 @@ void loadGuiGizmos(SDL_Renderer *ren)
 	bmp2 = IMG_Load(torpedoSlotOrangePath.c_str());
 	torpedoSlotOrange = SDL_CreateTextureFromSurface(ren, bmp2);
 	SDL_FreeSurface(bmp2);
+}
+
+void drawLoadGameStuff(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
+{
+	//gameLoadingScrollview
+	if (!loadedSaves)
+	{	
+		loadGameFileButton = newCampaignBackButton;
+		loadGameFileButton.setArrow(1);
+		loadGameFileButton.setLabel("Load");
+		loadGameFileButton.setPos(gscreenx - loadGameButton.sizeX() - (20 * gscreenx / 800), newCampaignBackButton.posY());
+		//clear any previously loaded elements that may have been present
+		gameLoadingScrollview.removeAllElements();
+
+		//make a list of all present savegame paths
+		string saveGamePath = "Saves";
+		vector<string> filePaths;
+
+		for (const auto & entry : std::filesystem::directory_iterator(saveGamePath))
+		{
+    	    std::cout << entry.path() << std::endl;
+    	    filePaths.push_back(entry.path());
+		}
+
+		for (int i = 0; i < filePaths.size(); i++)
+		{
+			gameLoadingScrollview.addElement(filePaths.at(i));
+		}
+		loadedSaves = true;
+
+	}
+
+	//set up correct positioning for the scrollview
+	gameLoadingScrollview.setPos(newCampaignBackButton.posX() + 20, 100 * gscreeny / 600);
+	//gameLoadingScrollview.setSize(gscreenx / 2, gscreeny - newCampaignBackButton.posY() - gscreeny - gameLoadingScrollview.posY());
+	gameLoadingScrollview.setSize(gscreenx / 2, 300);
+	string selected = gameLoadingScrollview.draw(ren, mouseX, mouseY, lastMouse);
+	//cout << "selected item = " << selected << "." << endl;
+	if (selected != "-1")
+	{
+		drawText(ren, textSizeNormal, color(255,255,255), "selected save file:", gameLoadingScrollview.posX() + gameLoadingScrollview.sizeX() + 50, gameLoadingScrollview.posY());
+		drawText(ren, textSizeNormal, color(255,255,255), selected, gameLoadingScrollview.posX() + gameLoadingScrollview.sizeX() + 50, gameLoadingScrollview.posY() + (getTextYSize(textSizeNormal) * 1));
+		drawText(ren, textSizeNormal, color(255,255,255), "on patrol: xxx", gameLoadingScrollview.posX() + gameLoadingScrollview.sizeX() + 50, gameLoadingScrollview.posY() + (getTextYSize(textSizeNormal) * 2));
+		drawText(ren, textSizeNormal, color(255,255,255), "date: xxx", gameLoadingScrollview.posX() + gameLoadingScrollview.sizeX() + 50, gameLoadingScrollview.posY() + (getTextYSize(textSizeNormal) * 3));
+
+		if (loadGameFileButton.draw(ren, mouseX, mouseY, lastMouse))
+		{
+			if (loadFromXml(selected, playerCampaignInfo, ren) == 0)
+			{
+				cout << "load xml savefile reported success" << endl;
+				gameLoadingScrollview.deselect();
+				showMainMenu = false;
+				newCampaignScreen = false;
+				campaignBaseScreen = true;
+				loadGameScreen = false;
+			}
+			else
+			{
+				gameLoadingScrollview.deselect();
+				cout << "load xml savefile failed" << endl;
+			}
+		}
+	}
+
+	return void();
+}
+
+void drawPeliminaryMissionStartScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
+{
+	drawText(ren, textSizeNormal, color(255,255,255), "some map or something idk yet", 200, 200);
+}
+
+void loadIngameSpecificTextures(SDL_Renderer *ren)
+{
+	generic_dial_needle = loadTextureToRam("Textures/Menus/Controls/generic_dial_needle.png", ren);
+
+	string depthMeterSmallPath = "Textures/Menus/Controls/Depth 50.png";
+	string compassTexturePath = "Textures/Menus/Controls/compass.png";
+	string throttleTexturePath = "Textures/Menus/Controls/Throttle.png";
+	
+	string periscopeButtonTexturePath = "Textures/Menus/Shortcuts/Periscope.png";
+	string mapViewTexturePath = "Textures/Menus/Shortcuts/NavMap.png";
+	string torpedoManagementTexturePath = "Textures/Menus/Shortcuts/TorpedoManagement.png";
+	string crewManagementTexturePath = "Textures/Menus/Shortcuts/Crew.png";
+	string freeCameraTexturePath = "Textures/Menus/Shortcuts/FreeCamera.png";
+
+	SDL_Surface *bmp2 = IMG_Load(depthMeterSmallPath.c_str());
+	depthMeterSmall = SDL_CreateTextureFromSurface(ren, bmp2);
+	SDL_FreeSurface(bmp2);
+
+	bmp2 = IMG_Load(compassTexturePath.c_str());
+	compassTexture = SDL_CreateTextureFromSurface(ren, bmp2);
+	SDL_FreeSurface(bmp2);
+
+	//min 30. max 329
+	depthMeterDial = dial(50*gscreenx/800, 700*gscreenx/800, 500*gscreeny/600, 65, depthMeterSmall, 30, 329);
+	//dial(depthMeterSmall, ren, 700*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
+
+	//bmp2 = IMG_Load(throttleTexturePath.c_str());
+	//throttleTexture = SDL_CreateTextureFromSurface(ren, bmp2);
+	//SDL_FreeSurface(bmp2);
+	throttleTexture = loadTextureToRam(throttleTexturePath ,ren);
+
+	periscopeButtonTexture = loadTextureToRam(periscopeButtonTexturePath ,ren);
+	mapViewTexture = loadTextureToRam(mapViewTexturePath ,ren);
+	torpedoManagementTexture = loadTextureToRam(torpedoManagementTexturePath ,ren);
+	crewManagementTexture = loadTextureToRam(crewManagementTexturePath ,ren);
+	freeCameraTexture = loadTextureToRam(freeCameraTexturePath ,ren);
+	periscope_viewport = loadTextureToRam("Textures/Menus/Controls/Periscope.png", ren);
+
+	//set up the buttons
+	periscopeButton = button("xxx", color(255,255,255),0,300,textSizeNormal);
+	periscopeButton.setBackgroundColor(color(0,0,0,200));
+	periscopeButton.setBorder(true);
+
+	mapviewButton = button("xxx", color(255,255,255),0,periscopeButton.posY() + periscopeButton.sizeY(),textSizeNormal);
+	mapviewButton.setBackgroundColor(color(0,0,0,200));
+	mapviewButton.setBorder(true);
+
+	torpedoManagementButton = button("xxx", color(255,255,255),0,mapviewButton.posY() + mapviewButton.sizeY(),textSizeNormal);
+	torpedoManagementButton.setBackgroundColor(color(0,0,0,200));
+	torpedoManagementButton.setBorder(true);
+
+	crewManagementButton = button("xxx", color(255,255,255),0,torpedoManagementButton.posY() + torpedoManagementButton.sizeY(),textSizeNormal);
+	crewManagementButton.setBackgroundColor(color(0,0,0,200));
+	crewManagementButton.setBorder(true);
+
+	freeCameraButton = button("xxx", color(255,255,255),0,crewManagementButton.posY() + crewManagementButton.sizeY(),textSizeNormal);
+	freeCameraButton.setBackgroundColor(color(0,0,0,200));
+	freeCameraButton.setBorder(true);
+
+	//periscope screen stuff
+	periscopeHeight.setSize(gscreeny*20/600, gscreeny*200/600);
+	periscopeHeight.setPos(((gscreenx - gscreeny)/2)+gscreeny - periscopeHeight.sizeX(), gscreeny*200/600);
+
+	return void();
+}
+
+void beIngame(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
+{
+	if (test3dButtonF1.draw(ren, mouseX, mouseY, lastMouse))
+	{
+		reverseMeshPushbackOrder = !reverseMeshPushbackOrder;
+		game3dRenderer.Start();
+	}
+
+	if (periscopeView)
+	{
+		periscopeScreen(ren, mouseX, mouseY, lastMouse);
+	}
+	else if (mapView)
+	{
+
+	}
+	else if (inGameTorpedoManagement)
+	{
+
+	}
+	else if (inGameCrewManagement)
+	{
+
+	}
+	else
+	{
+		//free camera
+	}
+	
+	if (periscopeButton.draw(ren, mouseX, mouseY, lastMouse, periscopeButtonTexture))
+	{
+		periscopeView = true;
+		mapView = false;
+		inGameTorpedoManagement = false;
+		inGameCrewManagement = false;
+		freeCameraView = false;
+
+		//3d is enabled in periscope mode because the periscope is used to view stuff in the 3d world
+		enable3D = true;
+	}
+
+	if (mapviewButton.draw(ren, mouseX, mouseY, lastMouse, mapViewTexture))
+	{
+		periscopeView = false;
+		mapView = true;
+		inGameTorpedoManagement = false;
+		inGameCrewManagement = false;
+		freeCameraView = false;
+
+		//map mode is where the player probably will spend most of their time. 3d is not enabled for this
+		enable3D = false;
+	}
+
+	if (torpedoManagementButton.draw(ren, mouseX, mouseY, lastMouse, torpedoManagementTexture))
+	{
+		periscopeView = false;
+		mapView = false;
+		inGameTorpedoManagement = true;
+		inGameCrewManagement = false;
+		freeCameraView = false;
+
+		//nothing having to do with 3d happens on the torpedo management screen
+		enable3D = false;
+	}
+
+	if (crewManagementButton.draw(ren, mouseX, mouseY, lastMouse, crewManagementTexture))
+	{
+		periscopeView = false;
+		mapView = false;
+		inGameTorpedoManagement = false;
+		inGameCrewManagement = true;
+		freeCameraView = false;
+
+		//nothing having to do with 3d happens on the crew management screen
+		enable3D = false;
+	}
+
+	if (freeCameraButton.draw(ren, mouseX, mouseY, lastMouse, freeCameraTexture))
+	{
+		periscopeView = false;
+		mapView = false;
+		inGameTorpedoManagement = false;
+		inGameCrewManagement = false;
+		freeCameraView = true;
+
+		//3d is drawn in free camera mode
+		enable3D = true;
+	}
+
+	if (test3dButtonF2.draw(ren, mouseX, mouseY, lastMouse))
+	{
+		offset1++;
+		if (offset1 == 2) 
+		{
+			offset1 = -1; 
+			offset2++;
+		}
+		if (offset2 == 2)
+		{
+			offset2 = -1;
+		}
+
+		game3dRenderer.Start();
+	}
+
+	drawText(ren, textSizeNormal, color(255,255,255), "in game. Now what, you asshat?", 200, 200);
+
+	double testDialVar = depthMeterDial.draw(ren, mouseX, mouseY, lastMouse);
+	drawText(ren, textSizeSeven, color(255,255,255), "depth = " + to_string(testDialVar), 400, 400);
+	drawText(ren, textSizeSeven, color(255,255,255), "degrees = " + to_string(depthMeterDial.degrees()), 400, 450);
+	//renderTextureEx(depthMeterSmall, ren, 700*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
+	renderTextureEx(throttleTexture, ren, 600*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
+	renderTextureEx(compassTexture, ren, 500*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
+
+	drawText(ren, textSizeSeven, color(255,255,255), to_string(offset2) + " " + to_string(offset1), 820, 150);
+
+	drawText(ren, textSizeSeven, color(255,255,255), to_string(shiftSlot3d), 820, 200);
+	if (test3dButtonF3.draw(ren, mouseX, mouseY, lastMouse))
+	{
+		shiftSlot3d++;
+		if (shiftSlot3d > 10) shiftSlot3d = 0;
+		game3dRenderer.Start();
+	}
+}
+
+void periscopeScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
+{
+	//draw periscope lense and pad sides with black
+	renderTextureEx(periscope_viewport, ren, (gscreenx - gscreeny)/2, 0, gscreeny, gscreeny, 0);
+	drawRectFilled(ren, color(0,0,0), 0, 0, (gscreenx - gscreeny)/2, gscreeny);
+	drawRectFilled(ren, color(0,0,0), ((gscreenx - gscreeny)/2)+gscreeny, 0, (gscreenx - gscreeny)/2, gscreeny);
+
+	//draw periscope height indicator
+	periscopeHeight.draw(ren);
 }

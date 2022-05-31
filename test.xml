@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<savefile>
+    <onPatrol>true</onPatrol>
+    <playerInfo>
+        <playerName>Bugart Humperswight</playerName>
+        <playerRank/>
+        <money>2</money>
+        <payrate>2.10</payrate>
+        <tonnageSunk>0.0</tonnageSunk>
+        <selectedSubmarineIndex>0</selectedSubmarineIndex>
+        <qualsToHandout>0</qualsToHandout>
+        <ownedSubmarines>a lot of fucking shit</ownedSubmarines>
+        <playerEmployees>a huge amount of fucking shit</playerEmployees>
+    </playerInfo>
+    <worldData>
+        <npc_unit/>
+    </worldData>
+</savefile>

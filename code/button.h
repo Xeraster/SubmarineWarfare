@@ -1,6 +1,8 @@
 #ifndef BUTTON_H
 #define BUTTON_H
 
+SDL_Texture *generic_dial_needle;
+
 class button
 {
 public:
@@ -45,9 +47,9 @@ public:
 	int derivedSizeY() { return (80 * m_fontsize / 24); }
 	int derivedSizeX() { return (30 * m_label.size() * m_fontsize / 24); }
 
-	bool draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse);
+	bool draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse, SDL_Texture *optionalTexture = nullptr);
 
-	void draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse, bool &boolToToggle);
+	void draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse, bool &boolToToggle, SDL_Texture *optionalTexture = nullptr);
 
 	button& operator=(const button& other);
 private:
@@ -65,7 +67,8 @@ private:
 	bool m_showBorder;
 	string m_tooltip;
 	int m_drawArrow; 		//-1 = no. 0 = up, 1 = right. 2 = down. 3 = left
-	void doDraw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse);
+	void doDraw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse, SDL_Texture *optionalTexture = nullptr);
+	void drawTextOrTexture(SDL_Renderer *ren, color textColor, SDL_Texture *optionalTexture = nullptr);	//to make the doDraw function easier to read and less complicated
 	void drawArrow(SDL_Renderer *ren, color arrowColor);
 
 	int m_hightlightRadius;
@@ -182,6 +185,174 @@ private:
 
 	int m_value;
 	int m_max;
+};
+
+//a vertical scroll view. You know, the kind of thing that looks like:
+/*
+
+----------------------------------
+|   blah blah blah             |--
+|   blah blah blah             |^^
+|   blorf blorf blorf          |!!
+|   example example            |!!
+|   foo foo foo                |\/
+|   bar                        |--
+|---------------------------------
+*/
+
+//note that the vertical scroll view class is pretty new and there might still be bugs
+class verticalScrollView
+{
+public:
+	verticalScrollView();
+
+	//make a constructor with nearly every parameter
+	verticalScrollView(int x, int y, int sizeX, int sizeY, int barWidth, color backgroundColor, color barColor, color highlightColor, color textColor);
+
+	//make a more minified one
+	verticalScrollView(int x, int y, int sizeX, int sizeY, int barWidth);
+
+	verticalScrollView(const verticalScrollView& other);
+
+	void setBackgroundColor(color whatColor) { m_backgroundColor = whatColor; }
+	color backgroundColor() const { return m_backgroundColor; }
+	void setBarColor(color whatColor) { m_barColor = whatColor; }
+	color barColor() const { return m_barColor; }
+	void setHighlightColor(color whatColor) { m_hightlightColor = whatColor; }
+	color highlightColor() const { return m_hightlightColor; }
+	void setTextColor(color whatColor) { m_textColor = whatColor; }
+	color textColor() const { return m_textColor; }
+
+
+	//calculates the text size automatically.
+	void setTextSize(int size) { m_textSize = size; }
+	int textSize() const { return m_textSize; }
+
+	void setPos(int px, int py);
+	int posX() const { return m_posX; }
+	int posY() const { return m_posY; }
+
+	void setSize(int sx, int sy) { m_sizeX = sx; m_sizeY = sy; }
+	int sizeX() const { return m_sizeX; }
+	int sizeY() const { return m_sizeY; }
+
+	void setBarWidth(int newWidth) { m_barWidth = newWidth; }
+	int barWidth() const { return m_barWidth; }
+
+	void setBarPos(int pos) { m_barPos = pos; }
+	int barPos() const { return m_barPos; }
+
+	//returns string of selected thing
+	string draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse);
+
+	verticalScrollView& operator=(const verticalScrollView& other);
+
+	void addElement(string elementText);
+
+	//removes all elements from the scroll view
+	void removeAllElements();
+
+	//deselects whatever is currently selected
+	void deselect();
+
+
+private:
+	color m_backgroundColor;
+	color m_barColor;
+	color m_hightlightColor;
+	color m_textColor;
+	int m_posX;
+	int m_posY;
+	int m_sizeX;
+	int m_sizeY;
+	int m_barWidth;
+
+	//the text size is calculated automatically
+	void calculateTextSize();
+	int m_textSize;
+
+	//housekeeping variables used internally based on stuff. Not meant to be accessed from the outside
+	int m_barHeight;
+	int m_barPos;
+	int m_mouseVerticalOffset;
+	bool m_holdingClick;
+	int m_selectedIndex;
+
+	//i'm going to try to work smart not hard by making the vertical scroll view contain a vector of buttons. That way part of the code is already managed by button objects
+	vector<button> m_elements;
+
+	//separate the scroll bar and the non scroll bar drawing code to make everything easier for the programmer to figure out wtf is going on
+	void drawScrollBar(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse);
+	void setStupidBool(bool value) { m_holdingClick = value; }
+
+	//figure out how many different scroll positions there are
+	int getNumPositions();
+
+};
+
+//==========================================================
+//dial ui element
+//========================================================
+class dial
+{
+
+public:
+
+	dial();
+	dial(int size, int posX, int posY, int maxVal, SDL_Texture *texture, double minAngle = 0, double maxAngle = 360);
+	dial(const dial& other);
+
+
+	dial& operator=(const dial& other);
+
+	int posX() const { return m_posX; }
+	int posY() const { return m_posY; }
+	void setPos(int px, int py) { m_posX = px; m_posY = py; }
+
+	int sizeX() const { return m_sizeX; }
+	int sizeY() const { return m_sizeY; }
+
+	color getDialColor() const { return m_dialColor; }
+	void setDialColor(color newColor) { m_dialColor = newColor; }
+
+	double maxVal() const { return m_maxVal; }
+	void setMaxVal(double newMax) { m_maxVal = newMax; }
+
+	void setMinDegrees(double newVal) { m_minDegrees = newVal; }
+	void setMaxDegrees(double newVal) { m_maxDegrees = newVal; }
+	double minDegrees() const { return m_minDegrees; }
+	double maxDegrees() const { return m_maxDegrees; }
+
+	SDL_Texture* getTexture() const { return m_elementTexture; }
+	void setTexture(SDL_Texture *newTexture) { m_elementTexture = newTexture; }
+
+	int getRadius() const { return m_radius; }
+	void setRadius(int newValue) { m_radius = newValue; m_sizeY = m_radius*2; m_sizeX = m_radius*2; }
+
+	void getCenter(int &x, int &y) { y = m_posY + m_radius; x = m_posX + m_radius; }
+
+	double value() const { return m_currentValue; }
+	double degrees() const { return m_degreesOfLastClick; }
+
+	double draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse);
+
+private:
+	int m_posX;
+	int m_posY;
+	int m_sizeX;
+	int m_sizeY;
+
+	double m_maxVal;
+
+	double m_minDegrees;
+	double m_maxDegrees;
+
+	int m_radius;
+	color m_dialColor;
+	SDL_Texture *m_elementTexture;
+
+	double m_currentValue;
+	double m_degreesOfLastClick;
 };
 
 extern SDL_Event testEvent;

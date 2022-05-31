@@ -93,7 +93,7 @@ void loadCampaignFile(string filePath)
 		if (line.at(0) != '#')
 		{
     		linesOfFile.push_back(line);
-    		cout << line << endl;
+    		//cout << line << endl;
     	}
 	}
 	itemFile.close();

@@ -33,6 +33,8 @@ public:
 
 	void fillTorpedosCommand();
 
+	void saveGame(string input);
+
 private:
 
 	color m_backgroundColor;

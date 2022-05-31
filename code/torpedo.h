@@ -130,6 +130,7 @@ int loadTorpedoFile(string filePath, SDL_Renderer *ren);
 
 int loadAllTorpedos(SDL_Renderer *ren);
 
+//returns nullptr if none found
 torpedo* getTorpedoByName(string name);
 
 torpedo* randomTorpedo();

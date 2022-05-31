@@ -115,7 +115,8 @@ void loadFactionFile(string filePath, SDL_Renderer *ren)
 		if (line.at(0) != '#')
 		{
     		linesOfFile.push_back(line);
-    		cout << line << endl;
+    		//causes too much useless unhelpful spam. commenting out for now
+    		//cout << line << endl;
     	}
 	}
 	itemFile.close();

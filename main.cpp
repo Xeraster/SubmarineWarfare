@@ -1,4 +1,7 @@
-#include "SDL2/SDL.h"
+#include "code/xml/tinyxml2.h" 				//tinyxml2 for xml support
+#include "code/xml/tinyxml2.cpp" 				//tinyxml2 for xml support
+
+#include "SDL2/SDL.h" 						//SDL for graphics, font and image scaling
 #include "SDL2/SDL_ttf.h"
 #include "SDL2/SDL_image.h"
 
@@ -9,6 +12,7 @@
 #include <time.h>
 #include <string>
 using namespace std;
+using namespace tinyxml2;
 
 #include <tgmath.h>
 #include <fstream>
@@ -16,7 +20,13 @@ using namespace std;
 #include <vector>
 #include <list>
 
+bool reverseMeshPushbackOrder = false;
+int offset1 = 1;
+int offset2 = 1;
+int shiftSlot3d = 0;
+
 #include <type_traits>
+
 #include "color.h"
 #include "code/coloredString.h"
 #include "randomFunctions.h"
@@ -41,7 +51,9 @@ using namespace std;
 #include "code/submarine.h"
 #include "code/campaign.h"
 #include "code/playerInfo.h"
+#include "code/worldInfo.h"
 #include "code/garbageCollection.h"
+#include "code/saveutils.h"
 #include "code/devConsole.h"
 SDL_Event testEvent;
 #include "code/menus.h"
@@ -110,6 +122,8 @@ void crewIconsLargeIntoMemory(SDL_Renderer *ren, vector<SDL_Texture*> &textureVe
 SDL_Texture *tex;
 vector<SDL_Texture*> crewicons_Large;
 
+SDL_Texture *poopy; //test texture access texture
+
 
 //SDL_Event testEvent;
 
@@ -140,7 +154,9 @@ int main()
 	/* initialize random seed: */
 	int testSeed = 69420;
   	srand (time(NULL));
-	crewMember testPerson(crewNameGeneratorObject);
+	
+
+	/*crewMember testPerson(crewNameGeneratorObject);
 	crewMember testPerson1(crewNameGeneratorObject);
 	crewMember testPerson2(crewNameGeneratorObject);
 	crewMember testPerson3(crewNameGeneratorObject);
@@ -163,7 +179,7 @@ int main()
 	fuckfuckfuck.push_back(testPerson4);
 	fuckfuckfuck.push_back(testPerson5);
 	fuckfuckfuck.push_back(testPerson6);
-	fuckfuckfuck.push_back(testPerson7);
+	fuckfuckfuck.push_back(testPerson7);*/
 
 	//inventoryItem poop("poop", "poop 1", "poop 2", 1, 0, "poop.bmp");
 	//food banana("banana", "banana 1", "banana 2", 5, 2, "banana.bmp", 1, 1.0, false);
@@ -192,7 +208,7 @@ int main()
 
 	//initialize this global variable for better zoom 1 performance
 	//initQuickAccessColors();
-
+  	cout << "poop" << endl;
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)
 	{
 		std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
@@ -220,6 +236,7 @@ int main()
 
 	//load the fonts into ram
 	loadFonts();
+	cout << "poop" << endl;
 
 	//enable blending. May be useful to add option to disable blending for better performance
 	SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
@@ -274,54 +291,36 @@ int main()
 	textureDirectoryIntoDatabase("Textures/Items/", ren);
 	loadInventoryItems(inventoryItemDatabase);
 	loadAllTorpedos(ren);
-	printAllItemsInDatabaseDetailed(inventoryItemDatabase);
-	cout << "desc = " << getRandomInventoryItem(inventoryItemDatabase)->getDescription() << endl;
-	thing poop(rand() % 8);
-	testThing = poop;
-	cout << testThing << endl;
-
-	cout << crewNameGeneratorObject->randomShipName() << endl;
-	cout << crewNameGeneratorObject->randomShipName() << endl;
-	cout << crewNameGeneratorObject->randomShipName() << endl;
-	cout << crewNameGeneratorObject->randomShipName() << endl;
-	cout << crewNameGeneratorObject->randomShipName() << endl;
-	cout << crewNameGeneratorObject->randomShipName() << endl;
-	cout << crewNameGeneratorObject->randomShipName() << endl;
-	cout << crewNameGeneratorObject->randomShipName() << endl;
-	cout << crewNameGeneratorObject->randomShipName() << endl;
-	cout << crewNameGeneratorObject->randomShipName() << endl;
-	cout << crewNameGeneratorObject->randomShipName() << endl;
+	//printAllItemsInDatabaseDetailed(inventoryItemDatabase);
+	//cout << "desc = " << getRandomInventoryItem(inventoryItemDatabase)->getDescription() << endl;
+	//thing poop(rand() % 8);
+	//testThing = poop;
+	//cout << testThing << endl;
 	
 	loadAllSubmarines(ren);
 	//loadSubmarineFile("Data/submarines/Foxtrot.sub");
-	cout << submarineRegistry->at(0).compartmentList.at(0).displayName() << endl;
-	cout << submarineRegistry->at(0).compartmentList.at(1).displayName() << endl;
-	cout << submarineRegistry->at(0).compartmentList.at(2).displayName() << endl;
 	//cout << "parent submarine= " << submarineRegistry->at(0).compartmentList.at(0).getParent()->name() << endl;
-	cout << "x=" << submarineRegistry->at(0).compartmentList.at(0).posX() << ", y=" << submarineRegistry->at(0).compartmentList.at(0).posY() << endl;
 	int texQX = 0;
 	int texQY = 0;
 	SDL_QueryTexture(submarineRegistry->at(0).getLargeIcon(), NULL, NULL, &texQX, &texQY);
 	//SDL_QueryTexture(submarineRegistry->at(0).getLargeIcon(), SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, texQX, texQY);
-	cout << "size of MainIcon = " << texQX << " ," << texQY << endl;
+	//cout << "size of MainIcon = " << texQX << " ," << texQY << endl;
 	loadAllFactions(ren);
 	loadAllCampaigns();
 	//after the campaigns have all been loaded, run this function to designate the default one
 	campaignSelectionIndex = getCampaignIndexByName("Rags to Riches");
 
-	cout << "campaign start sub = " << campaignDatabase->at(0).startSub()->name() << endl;
-	for (int i = 0; i < factionDatabase->size(); i++)
+	//all this does is print information about each loaded faction. Commenting out now as there is TOO MUCH FUCKING SPAM outputting to the console every time this starts up
+	/*for (int i = 0; i < factionDatabase->size(); i++)
 	{
 		cout << factionDatabase->at(i).name() << endl;
 		cout << factionDatabase->at(i).description() << endl;
 		cout << factionDatabase->at(i).textureName() << endl;
-	}
-	//cout << *textureDatabase.at(0) << endl;
-	//textureEntry banana("Textures/Items/banana.bmp", "banana.bmp", ren);
+	}*/
 
 	//you can actually set this to a number lower than the windowsize (for example 400x300) and it will render the 3d in a lower resolution than the 2d layer
 	//great for running on super old crappy computers
-	if (game3dRenderer.ConstructConsole(800, 600, 1, 1, win, ren))
+	if (game3dRenderer.ConstructConsole(gscreenx, gscreeny, 1, 1, win, ren))
 	{
 		game3dRenderer.Start();
 		cout << "3d renderer started sucessfully" << endl;
@@ -330,6 +329,27 @@ int main()
 	{
 		cout << "3d renderer could not start for some reason";
 	}
+
+	cout << "before loading test.xml" << endl;
+	//xml testing shit
+	XMLDocument doc;
+	doc.LoadFile("test.xml");
+	XMLElement *rootElement = doc.RootElement()->FirstChildElement("onPatrol");
+	cout << rootElement->GetText() << endl;
+	cout << "after loading test.xml (the stuff line above should be the contents of the file" << endl;
+	rootElement->SetText("true");
+	doc.SaveFile("test.xml");
+
+	poopy = loadTextureToRam_TA("stripes.bmp", ren, win);
+	//cout << "loaded texture" << endl;
+	//color poopyColor = pixelAtPos(poopy, ren, win, 0, 0);
+	//color poopyColor2 = pixelAtPos(poopy, ren, win, 2, 4);
+	//color poopyColor3 = pixelAtPos(poopy, ren, win, 6, 3);
+	//cout << "got color information of texture at given position" << endl;
+	//cout << "r=" << poopyColor.getRed() << ", g=" << poopyColor.getGreen() << ", b=" << poopyColor.getBlue() << endl;
+	//cout << "r=" << poopyColor2.getRed() << ", g=" << poopyColor2.getGreen() << ", b=" << poopyColor2.getBlue() << endl;
+	//cout << "r=" << poopyColor3.getRed() << ", g=" << poopyColor3.getGreen() << ", b=" << poopyColor3.getBlue() << endl;
+	//cout << "printed color information" << endl;
 
 	fpsTimer.start();
 	while (exitGame == false)
@@ -401,9 +421,11 @@ int main()
 	//delete [] crewNameGeneratorObject;
 	deleteFonts();
 	delete [] skillStringArray;
+	//delete [] game3dRenderer.meshesToRender;
 	SDL_DestroyRenderer(ren);
 	SDL_DestroyWindow(win);
 	SDL_DestroyTexture(tex);
+	//delete game3dRenderer;
 	//delete [] bmp;
 	return 0;
 } 
@@ -501,6 +523,16 @@ void update(SDL_Renderer *ren, SDL_Window *win)
 		//renderTexture(textureDatabase.at(0)->tex, ren, 400, 400);
 		drawText(ren, 8, white, timeText, 2, 2);
 		drawText(ren, 8, white, "mouse=" + to_string(mouseX) + "x" + to_string(mouseY), 2, 50);
+
+		//the loop that tests the pixelAtPos function
+		//for (int xxx = 0; xxx < 8; xxx++)
+		//{
+		//	for (int yyy=0; yyy<8; yyy++)
+		//	{
+		//		drawPixel(ren, xxx, yyy, pixelAtPos(poopy, ren, win, xxx, yyy));
+		//	}
+		//}
+
 		//Update the screen
 		SDL_RenderPresent(ren);
 		test.join();

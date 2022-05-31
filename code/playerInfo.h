@@ -38,7 +38,16 @@ class playerInfo
 
 		void setInfoCardCrewPointer(crewMember *crew) { m_infoCardCrew = crew; }
 		crewMember* getInfoCardCrewPointer() { return m_infoCardCrew; }
+		
+		//use this one to hire crew from the m_recruitableEmployees pool.
+		//intended for normal gameplay
 		void hireCrew(int indexNum);
+
+		//use this one to hire crew from somewhere other than the m_recruitableEmployees pool
+		//anything passed through this will copy the given crew person direfctly into the m_playerEmployees vector, bypassing the normal hiring system
+		//intended to be used for dev commands or for loading from a save
+		//if putInBarracks = false, crew will be spawned in the active submarine. Otherwise, the crew person will be spawned in barracks
+		void hireSpawnedCrew(crewMember employee, bool putInBarracks);
 
 		//return the amount of qualifications that the player has been given to hand out
 		//Am I doing a shit job of describing what these are? Either play Silent Hunter 3 or watch a SH3 let's play (I recommend wolfpack345) to see what I'm talking about
@@ -93,12 +102,24 @@ class playerInfo
 		*/
 		bool addTorpedoToSubmarine(torpedo *torpedoType);
 
+		//adds a torpedo to a specific slot in the submarine. Returns 0 if success. Returns 1 if torpedo already in slot. Returns 2 if invalid slot given. If a torpedo is already in slot, it doesn't do it
+		int addTorpedoToSubmarineSlot(torpedo *torpedoType, submarine *whichSub, int torpedoSlot);
+
 		bool buyTorpedo(torpedo *torpedoType);
 
 		void sellTorpedo(torpedo *pointer);
 
 		//return 0 = success. 1 = not enough money. 2 = submarine already contains the exact same part. 3 = submarine not compatible with part. 4 = provided part was null
 		int applyUpgradeToSubmarine(upgradePart *upgrade);
+
+		//return 0 = success. 1 = failure
+		//dataElement is the pointer to the element containing the player info data
+		int playerInfoToSaveXml(XMLElement *dataElement);
+
+		//return 0 = success. 1 = failure
+		//dataElement is the pointer to the element containing the player info data
+		int playerInfoFromXml(XMLElement *dataElement, SDL_Renderer *ren);
+
 
 		//needs to be public variable for garbage collection routines
 		//where all torpedos the player owns are stored
@@ -142,6 +163,7 @@ class playerInfo
 
 		double m_tonnageSunk;
 
+		//to make saving/loading easier. Only gets updated during saving and loading. Don't use this for anything other than saving and loading
 		int m_selectedSubmarineIndex;
 
 		//number of qualifications the player has been given to hand out
@@ -158,6 +180,9 @@ class playerInfo
 		int m_barracksSy;
 
 		submarine *m_selectedSubmarine;
+
+		//used for xml save loading. Returns nullptr if submarine not found. Returns pointer to submarine if it found a submarine with the provided id hash
+		submarine* findSubmarineFromHash(string hash);
 };
 
 

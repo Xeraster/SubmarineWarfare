@@ -561,6 +561,25 @@ bool submarineCompartment :: crewToSpecificSlot(crewMember *person, int x, int y
 	}
 }
 
+//adds crew pointer to slot at position.
+//returns 0 if sucess. returns 1 if already occupied. returns 2 if provided slot number invalid
+int submarineCompartment :: crewToSlotNumber(crewMember *person, int slotNum)
+{	
+	if (slotNum < 0 or slotNum > m_crewSlotArray.size()) return 2;
+
+	//if slot unoccupied, put crew pointer in provided slot
+	if (m_crewSlotArray.at(slotNum) == nullptr)
+	{
+		m_crewSlotArray.at(slotNum) = person;
+		updateManpower();
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
+}
+
 bool submarineCompartment :: eraseDuplicateCrew(crewMember *person, int excludeSlot)
 {
 	bool foundMatch = false;
@@ -1042,6 +1061,23 @@ bool submarineCompartment :: crewToSpecificSlotInBarracks(crewMember *person, in
 		updateManpower();
 		return true;
 	}
+}
+
+int submarineCompartment :: toSaveXml(XMLElement *dataElement, int index)
+{
+	XMLElement *compartmentNode = dataElement->InsertNewChildElement("compartment");
+
+	writeElement(compartmentNode, "index", index);
+	writeElement(compartmentNode, "compartmentType", m_type);
+
+	for (int i = 0; i < m_crewSlotArray.size(); i++)
+	{
+		//writeElement(compartmentNode, "slot"+to_string(i), 0);
+		if (m_crewSlotArray.at(i) == nullptr) writeElement(compartmentNode, "slot"+to_string(i), 0);
+		else writeElement(compartmentNode, "slot"+to_string(i), m_crewSlotArray.at(i)->makeIdHashSalt());
+	}
+
+	dataElement->InsertEndChild(compartmentNode);
 }
 
 submarineCompartment& submarineCompartment :: operator=(submarineCompartment& other)

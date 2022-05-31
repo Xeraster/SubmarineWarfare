@@ -189,6 +189,17 @@ public:
 
 	void putPartInSubmarine(upgradePart *part);
 
+	//returns a mostly unique id used for saving and loading based on the submarines's info
+	//it's not impossible for 2 submarines to have the same id, just highly unlikely. In the future, the way this function works may change
+	string makeIdHashSalt();
+
+	//takes a submarine and saves it to xml in the game-saving function
+	int toSaveXml(XMLElement *dataElement, int subIndex);
+
+	void loadRestOfStuffFromXml(XMLElement *dataElement);
+
+	void progressUpgradeSaving(XMLElement *dataElement, string keyName, upgradePart *part);
+
 	submarine& operator=(submarine& other);
 
 protected:

@@ -53,6 +53,8 @@ int loadAllAwards(SDL_Renderer *ren);
 
 void getAwardsOfType(int type, vector<award*> *awardArray);
 
+award* getAwardByName(string name);
+
 #include "awards.hpp"
 
 #endif

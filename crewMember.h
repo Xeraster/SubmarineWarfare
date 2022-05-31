@@ -24,6 +24,9 @@ public:
 
 	crewMember(crewNameGenerator *randomNameObject, uint32_t seed);
 
+	//use this one for instantiating crew nodes from a save file
+	crewMember(XMLElement *saveGameElement);
+
 
 	string getRankString();
 
@@ -120,6 +123,12 @@ public:
     //crewMember(crewMember&& source);
 
 	bool isEqualTo(crewMember other);
+
+	//returns a mostly unique id used for saving and loading based on the crew person's info
+	string makeIdHashSalt();
+
+	//takes a crew person ans saves them to xml in the game-saving function
+	int toSaveXml(XMLElement *dataElement);
 
 	//dammit the vector memory allocation bug is really fucking this up
 	//luckily, declaring it as a new vector in the init constructor and the copy constructor fixes it. For now

@@ -1,0 +1,222 @@
+<savefile>
+    <onPatrol>false</onPatrol>
+    <playerInfo>
+        <playerName>New Player</playerName>
+        <playerRank>9</playerRank>
+        <money>10000</money>
+        <payrate>1.5</payrate>
+        <tonnageSunk>0</tonnageSunk>
+        <selectedSubmarineId>Holland1156373396</selectedSubmarineId>
+        <qualsToHandout>0</qualsToHandout>
+        <startingCampaign>Rags to Riches</startingCampaign>
+        <faction>Federation</faction>
+        <awardsToGiveOut>
+            <award>
+                <awardType>Employee of the Month</awardType>
+                <amount>5</amount>
+            </award>
+            <award>
+                <awardType>Dunce Cap</awardType>
+                <amount>9</amount>
+            </award>
+            <award>
+                <awardType>Distinguished service award</awardType>
+                <amount>10</amount>
+            </award>
+            <award>
+                <awardType>Superior Service</awardType>
+                <amount>10</amount>
+            </award>
+            <award>
+                <awardType>Silver Star</awardType>
+                <amount>10</amount>
+            </award>
+            <award>
+                <awardType>Employee of the Year</awardType>
+                <amount>10</amount>
+            </award>
+        </awardsToGiveOut>
+        <hiredCrew>
+            <crewMember>
+                <id>LylahHart03094516932</id>
+                <gender>0</gender>
+                <firstname>Lylah</firstname>
+                <lastname>Hart</lastname>
+                <skill>2</skill>
+                <wizardingSkill>0</wizardingSkill>
+                <intelligence>18</intelligence>
+                <sex>20</sex>
+                <sexualityIndex>2</sexualityIndex>
+                <fetishIndex>15</fetishIndex>
+                <age>32</age>
+                <breastSize>31C</breastSize>
+                <penisLength>-10.81</penisLength>
+                <anusType>Large</anusType>
+                <pubicHair>Landing strip</pubicHair>
+                <stripperVariant>2</stripperVariant>
+                <rank>2</rank>
+                <wage>153</wage>
+                <wizard>false</wizard>
+                <scientist>false</scientist>
+                <award>Employee of the Month</award>
+            </crewMember>
+            <crewMember>
+                <id>JohnathonDuron13977323890</id>
+                <gender>1</gender>
+                <firstname>Johnathon</firstname>
+                <lastname>Duron</lastname>
+                <skill>1</skill>
+                <wizardingSkill>2</wizardingSkill>
+                <intelligence>10</intelligence>
+                <sex>13</sex>
+                <sexualityIndex>25</sexualityIndex>
+                <fetishIndex>8</fetishIndex>
+                <age>38</age>
+                <breastSize>N/A</breastSize>
+                <penisLength>10.09</penisLength>
+                <anusType>Micro</anusType>
+                <pubicHair>Partial bikini wax</pubicHair>
+                <stripperVariant>3</stripperVariant>
+                <rank>6</rank>
+                <wage>565</wage>
+                <wizard>false</wizard>
+                <scientist>false</scientist>
+                <award>Employee of the Month</award>
+                <award>Dunce Cap</award>
+            </crewMember>
+            <crewMember>
+                <id>MyaLoyd02365820258</id>
+                <gender>0</gender>
+                <firstname>Mya</firstname>
+                <lastname>Loyd</lastname>
+                <skill>8</skill>
+                <wizardingSkill>0</wizardingSkill>
+                <intelligence>13</intelligence>
+                <sex>15</sex>
+                <sexualityIndex>16</sexualityIndex>
+                <fetishIndex>39</fetishIndex>
+                <age>23</age>
+                <breastSize>31A</breastSize>
+                <penisLength>-10.960000000000001</penisLength>
+                <anusType>Small</anusType>
+                <pubicHair>Greasy and hairy</pubicHair>
+                <stripperVariant>2</stripperVariant>
+                <rank>7</rank>
+                <wage>655</wage>
+                <wizard>false</wizard>
+                <scientist>false</scientist>
+                <award>Employee of the Month</award>
+            </crewMember>
+            <crewMember>
+                <id>KeniaWright03485920218</id>
+                <gender>0</gender>
+                <firstname>Kenia</firstname>
+                <lastname>Wright</lastname>
+                <skill>1</skill>
+                <wizardingSkill>1</wizardingSkill>
+                <intelligence>7</intelligence>
+                <sex>14</sex>
+                <sexualityIndex>15</sexualityIndex>
+                <fetishIndex>32</fetishIndex>
+                <age>22</age>
+                <breastSize>33DDD</breastSize>
+                <penisLength>-6.9399999999999995</penisLength>
+                <anusType>Tight</anusType>
+                <pubicHair>Clean shaven</pubicHair>
+                <stripperVariant>0</stripperVariant>
+                <rank>8</rank>
+                <wage>776</wage>
+                <wizard>false</wizard>
+                <scientist>false</scientist>
+                <award>Employee of the Month</award>
+            </crewMember>
+            <crewMember>
+                <id>MileyGates0830411775</id>
+                <gender>0</gender>
+                <firstname>Miley</firstname>
+                <lastname>Gates</lastname>
+                <skill>5</skill>
+                <wizardingSkill>1</wizardingSkill>
+                <intelligence>14</intelligence>
+                <sex>1</sex>
+                <sexualityIndex>16</sexualityIndex>
+                <fetishIndex>28</fetishIndex>
+                <age>38</age>
+                <breastSize>36C</breastSize>
+                <penisLength>-4.1600000000000001</penisLength>
+                <anusType>Average</anusType>
+                <pubicHair>Bikini waxed</pubicHair>
+                <stripperVariant>3</stripperVariant>
+                <rank>3</rank>
+                <wage>235</wage>
+                <wizard>false</wizard>
+                <scientist>false</scientist>
+                <award>Employee of the Month</award>
+            </crewMember>
+        </hiredCrew>
+        <ownedSubmarines>
+            <submarine>
+                <index>0</index>
+                <class>Holland</class>
+                <shipname>The Revenge</shipname>
+                <batteryUpgrade>0</batteryUpgrade>
+                <engineUpgrade>0</engineUpgrade>
+                <electricEngineUpgrade>0</electricEngineUpgrade>
+                <nuclearReactor>0</nuclearReactor>
+                <fuelTank>0</fuelTank>
+                <oxygenGenerator>0</oxygenGenerator>
+                <radarUpgrade>0</radarUpgrade>
+                <radarDetector>0</radarDetector>
+                <activeSonarUpgrade>0</activeSonarUpgrade>
+                <hydrophones>0</hydrophones>
+                <hullUpgrade>0</hullUpgrade>
+                <stealthMisc>0</stealthMisc>
+                <torpedoStorage>
+                    <torpedo>0</torpedo>
+                    <torpedo>0</torpedo>
+                    <torpedo>0</torpedo>
+                </torpedoStorage>
+                <compartmentData>
+                    <compartment>
+                        <index>0</index>
+                        <compartmentType>0</compartmentType>
+                        <slot0>MyaLoyd02365820258</slot0>
+                        <slot1>MileyGates0830411775</slot1>
+                        <slot2>0</slot2>
+                        <slot3>0</slot3>
+                        <slot4>0</slot4>
+                        <slot5>0</slot5>
+                        <slot6>0</slot6>
+                        <slot7>0</slot7>
+                        <slot8>0</slot8>
+                        <slot9>0</slot9>
+                    </compartment>
+                    <compartment>
+                        <index>1</index>
+                        <compartmentType>4</compartmentType>
+                        <slot0>0</slot0>
+                        <slot1>0</slot1>
+                        <slot2>0</slot2>
+                        <slot3>0</slot3>
+                        <slot4>0</slot4>
+                        <slot5>0</slot5>
+                    </compartment>
+                    <compartment>
+                        <index>2</index>
+                        <compartmentType>5</compartmentType>
+                        <slot0>JohnathonDuron13977323890</slot0>
+                        <slot1>0</slot1>
+                    </compartment>
+                    <compartment>
+                        <index>3</index>
+                        <compartmentType>2</compartmentType>
+                        <slot0>LylahHart03094516932</slot0>
+                        <slot1>KeniaWright03485920218</slot1>
+                        <slot2>0</slot2>
+                        <slot3>0</slot3>
+                    </compartment>
+                </compartmentData>
+            </submarine>
+        </ownedSubmarines>
+    </playerInfo>
+</savefile>

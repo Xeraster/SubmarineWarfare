@@ -132,6 +132,9 @@ bool campaignBaseScreen = false;
 bool recruitmentScreen = false;
 bool showPurchaseScreen = false;
 bool preliminaryMissionStartScreen = false;
+bool multiplayerMenu = false;
+bool loadGameScreen = false;
+bool loadedSaves = false;
 extern bool enable3D;
 
 bool newPlayerGenerated = false;
@@ -148,6 +151,53 @@ extern crewNameGenerator *crewNameGeneratorObject;
 extern string playerName;
 extern string shipName;
 
+/*=============================
+in-game menus
+============================
+1. the general purpose overlay that's over everything regardless of what in-game view mode you're in
+2. periscope
+3. map view
+4. torpedo management
+5. crew management
+6. free camera view
+*/
+bool ingameMenus = false;
+bool periscopeView = false;
+bool mapView = false;
+bool inGameTorpedoManagement = false;
+bool inGameCrewManagement = false;
+bool freeCameraView = false;
+
+//in game menu textures
+SDL_Texture *depthMeterSmall;
+SDL_Texture *throttleTexture;
+SDL_Texture *compassTexture;
+SDL_Texture *periscope_viewport;
+dial depthMeterDial;
+
+SDL_Texture *periscopeButtonTexture;
+SDL_Texture *mapViewTexture;
+SDL_Texture *torpedoManagementTexture;
+SDL_Texture *crewManagementTexture;
+SDL_Texture *freeCameraTexture;
+
+button periscopeButton;
+button mapviewButton;
+button torpedoManagementButton;
+button crewManagementButton;
+button freeCameraButton;
+
+button test3dButtonF1 = button("reverse dir", color(255,0,255), 600, 100, 12);
+button test3dButtonF2 = button("change offsets", color(255,0,255), 600, 150, 12);
+button test3dButtonF3 = button("shift matrices", color(255,0,255), 600, 200, 12);
+extern olcEngine3D game3dRenderer;
+
+progressBar periscopeHeight(0, 0, 5, 50, color(255,150,0), 15, false);
+
+//the load game screen objects
+verticalScrollView gameLoadingScrollview(800, 600, 250, 100, 15);
+button loadGameFileButton;
+
 void campaignSelectionGoRight();
 void campaignSelectionGoLeft();
 
@@ -161,6 +211,17 @@ void drawSettingsScreen(SDL_Renderer *ren, int screenSizeX, int screenSizeY, int
 
 //the screen used for buying stuff such as submarines, upgrades, inventory crap and other stuff
 void drawPurchaseScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse);
+
+void drawLoadGameStuff(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse);
+
+void drawPeliminaryMissionStartScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse);
+
+void loadIngameSpecificTextures(SDL_Renderer *ren);
+
+//in-game 2d menu draing functions
+void beIngame(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse);
+
+void periscopeScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse);
 
 #include "menus.hpp"
 

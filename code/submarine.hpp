@@ -792,6 +792,13 @@ submarine& submarine :: operator=(submarine& other)
 	m_sourceSlotNum = -1;
 	m_destSlotNum = -1;
 
+	//need to copy torpedo pointers as well
+	torpedoStorage->resize(other.torpedoStorage->size());
+	for (int t = 0; t < other.torpedoStorage->size(); t++)
+	{
+		torpedoStorage->at(t) = other.torpedoStorage->at(t);
+	}
+
 	return *this;
 }
 
@@ -1348,6 +1355,8 @@ void submarine :: drawTorpedoArming(SDL_Renderer *ren, int posX, int posY, int s
 
 	int torpedoSizeX = 173 * gscreenx / 1366;
 	int torpedoSizeY = 33 * gscreenx / 1366;
+	cout << "torpedoSizeX = " << torpedoSizeX << endl;
+	cout << "torpedoSizeY = " << torpedoSizeY << endl;
 
 	int sellTorpedoIndex = m_bowTorpedoTubes + m_bowReserve + m_sternTorpedoTubes + m_sternReserve;
 	int sellTorpedoPosX = gscreenx - (torpedoSizeX * 1.2);
@@ -1727,6 +1736,95 @@ void submarine :: putPartInSubmarine(upgradePart *part)
 	{
 		m_stealthMisc = part;
 	}
+}
+
+//returns a mostly unique id used for saving and loading based on the submarines's info
+//it's not impossible for 2 submarines to have the same id, just highly unlikely. In the future, the way this function works may change
+string submarine :: makeIdHashSalt()
+{
+	string firstPart = m_name;
+	firstPart += to_string(betterRand(numberFromString(m_shipName)));
+
+	return firstPart;
+}
+
+//takes a submarine and saves it to xml in the game-saving function
+int submarine :: toSaveXml(XMLElement *dataElement, int subIndex)
+{
+	XMLElement *submarineData = dataElement->InsertNewChildElement("submarine");
+
+	writeElement(submarineData, "index", subIndex);
+	writeElement(submarineData, "class", m_name);
+	writeElement(submarineData, "shipname", m_shipName);
+
+	progressUpgradeSaving(submarineData, "batteryUpgrade", m_batteryUpgrade);
+	progressUpgradeSaving(submarineData, "engineUpgrade", m_engineUpgrade);
+	progressUpgradeSaving(submarineData, "electricEngineUpgrade", m_electricEngineUpgrade);
+	progressUpgradeSaving(submarineData, "nuclearReactor", m_nuclearReactor);
+	progressUpgradeSaving(submarineData, "fuelTank", m_fuelTank);
+	progressUpgradeSaving(submarineData, "oxygenGenerator", m_oxygenGenerator);
+	progressUpgradeSaving(submarineData, "radarUpgrade", m_radarUpgrade);
+	progressUpgradeSaving(submarineData, "radarDetector", m_radarDetector);
+	progressUpgradeSaving(submarineData, "activeSonarUpgrade", m_activeSonarUpgrade);
+	progressUpgradeSaving(submarineData, "hydrophones", m_hydrophones);
+	progressUpgradeSaving(submarineData, "hullUpgrade", m_hullUpgrade);
+	progressUpgradeSaving(submarineData, "stealthMisc", m_stealthMisc);
+
+	//create another child node and save the torpedos
+	XMLElement *torpedoStorageNode = submarineData->InsertNewChildElement("torpedoStorage");
+
+	for (int i = 0; i < torpedoStorage->size(); i++)
+	{
+		//XMLElement *torpedoNode = torpedoStorageNode->InsertNewChildElement("torpedo");
+		if (torpedoStorage->at(i) == nullptr) writeElement(torpedoStorageNode, "torpedo", 0);
+		else writeElement(torpedoStorageNode, "torpedo", torpedoStorage->at(i)->name());
+		//torpedoStorageNode->InsertEndChild(torpedoNode);
+	}
+
+	submarineData->InsertEndChild(torpedoStorageNode);
+	//done saving torpedo data
+
+	XMLElement *compartmentNode = submarineData->InsertNewChildElement("compartmentData");
+
+	for (int i=0; i < compartmentList.size(); i++)
+	{
+		compartmentList.at(i).toSaveXml(compartmentNode, i);
+	}
+
+	submarineData->InsertEndChild(compartmentNode);
+
+	dataElement->InsertEndChild(submarineData);
+
+	return 0;
+}
+
+void submarine :: loadRestOfStuffFromXml(XMLElement *dataElement)
+{
+	//the only stuff not already loaded at this point are
+	//1. ship upgrades
+	//2. crew slot locations
+	//3. torpedos
+	m_batteryUpgrade = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("batteryUpgrade")->GetText());
+	m_engineUpgrade = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("engineUpgrade")->GetText());
+	m_electricEngineUpgrade = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("electricEngineUpgrade")->GetText());
+	m_nuclearReactor = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("nuclearReactor")->GetText());
+	m_fuelTank = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("fuelTank")->GetText());
+	m_oxygenGenerator = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("oxygenGenerator")->GetText());
+	m_radarUpgrade = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("radarUpgrade")->GetText());
+	m_radarDetector = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("radarDetector")->GetText());
+	m_activeSonarUpgrade = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("activeSonarUpgrade")->GetText());
+	m_hydrophones = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("hydrophones")->GetText());
+	m_hullUpgrade = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("hullUpgrade")->GetText());
+	m_stealthMisc = findUpgradePartByName(inventoryItemDatabase,dataElement->FirstChildElement("stealthMisc")->GetText());
+	return void();
+}
+
+void submarine :: progressUpgradeSaving(XMLElement *dataElement, string keyName, upgradePart *part)
+{
+	if (part != nullptr) writeElement(dataElement, keyName.c_str(), part->getName());
+	else writeElement(dataElement, keyName.c_str(), 0);
+
+	return void();
 }
 
 double submarine :: getBatteryMultiplier()

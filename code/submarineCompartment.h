@@ -80,6 +80,10 @@ public:
 	//adds crew pointer to slot at screen position inputted by x, y. Returns false if failed, true if success
 	bool crewToSpecificSlot(crewMember *person, int x, int y, int screenX, int *slotNum, crewMember **crewToPutInPlace);
 
+	//adds crew pointer to slot at position.
+	//returns 0 if sucess. returns 1 if already occupied. returns 2 if given slot number invalid
+	int crewToSlotNumber(crewMember *person, int slotNum);
+
 	bool eraseDuplicateCrew(crewMember *person, int excludeSlot);
 
 	bool replaceDuplicateCrew(crewMember *person, int excludeSlot, crewMember* replacement);
@@ -131,6 +135,8 @@ public:
 	void coordinatesToSlotNumInBarracks(int x, int y, int *slotNum, int screenX);
 	//adds crew pointer to slot at screen position inputted by x, y. Returns false if failed, true if success
 	bool crewToSpecificSlotInBarracks(crewMember *person, int x, int y, int screenX, int *slotNum, crewMember **crewToPutInPlace);
+
+	int toSaveXml(XMLElement *dataElement, int index);
 
 	submarineCompartment& operator=(submarineCompartment& other);
 

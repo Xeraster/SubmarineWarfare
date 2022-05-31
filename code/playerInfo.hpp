@@ -45,6 +45,7 @@ playerInfo :: playerInfo(campaign *newCampaign, string captainName, string shipN
 	//make a pointer to the selected submarine in the player's garage
 	m_selectedSubmarine = &m_submarines.at(0);
 	m_selectedSubmarine->setShipName(shipName);
+	m_startingCampaign = newCampaign;
 }
 
 playerInfo :: ~playerInfo()
@@ -69,6 +70,8 @@ void playerInfo :: generateEmployableCrew(int quantity)
 
 }
 
+//use this one to hire crew from the m_recruitableEmployees pool.
+//intended for normal gameplay
 void playerInfo :: hireCrew(int indexNum)
 {
 	m_playerEmployees.push_back(m_recruitableEmployees.at(indexNum));
@@ -100,7 +103,23 @@ void playerInfo :: hireCrew(int indexNum)
 
 	m_selectedSubmarine->updateCrewCounts();
 
+	return void();
 
+}
+
+//use this one to hire crew from somewhere other than the m_recruitableEmployees pool
+//anything passed through this will copy the given crew person direfctly into the m_playerEmployees vector, bypassing the normal hiring system
+//intended to be used for dev commands or for loading from a save
+//if putInBarracks = false, crew will be spawned in the active submarine. Otherwise, the crew person will be spawned in barracks
+void playerInfo :: hireSpawnedCrew(crewMember employee, bool putInBarracks)
+{
+	m_playerEmployees.push_back(employee);
+
+	int slotNum;
+	m_barracks.moveCrewToAnySlot(&m_playerEmployees.back(), &slotNum);
+	cout << "moved loaded crew person into slot " << slotNum << " in barracks" << endl;
+
+	return void();
 }
 
 int playerInfo :: numEmployedCrew()
@@ -335,6 +354,31 @@ bool playerInfo :: addTorpedoToSubmarine(torpedo *torpedoType)
 	return foundSpot;
 }
 
+//adds a torpedo to a specific slot in the submarine. Returns 0 if success. Returns 1 if torpedo already in slot. Returns 2 if invalid slot given. If a torpedo is already in slot, it doesn't do it
+int playerInfo :: addTorpedoToSubmarineSlot(torpedo *torpedoType, submarine *whichSub, int torpedoSlot)
+{
+	int numSubTorps = whichSub->bowTorpedoTubes() + whichSub->sternTorpedoTubes() + whichSub->bowReserve() + whichSub->sternReserve();
+	
+	if (numSubTorps < torpedoSlot) 
+	{
+		cout << "Error. Invalid torpedo slot given in playerInfo::addTorpedoToSubmarineSlot" << endl;
+		return 2;
+	}
+
+	if (whichSub->torpedoStorage->at(torpedoSlot) == nullptr)
+	{
+		torpedo newTorpedo = *torpedoType;
+		m_playerTorpedos->push_back(newTorpedo);
+		whichSub->torpedoStorage->at(torpedoSlot) = &m_playerTorpedos->back();
+		return 0;
+	}
+	else
+	{
+		cout << "Cannot add torpedo to slot " << torpedoSlot << " in playerInfo::addTorpedoToSubmarineSlot. Slot already occupied." << endl;
+		return 1;
+	}
+}
+
 bool playerInfo :: buyTorpedo(torpedo *torpedoType)
 {
 	if (m_budget >= torpedoType->cost())
@@ -394,4 +438,246 @@ int playerInfo :: applyUpgradeToSubmarine(upgradePart *upgrade)
 		//add the part to the submarine
 		m_selectedSubmarine->putPartInSubmarine(upgrade);
 	}
+}
+
+//return 0 = success. 1 = failure
+//dataElement is the pointer to the element containing the player info data
+int playerInfo :: playerInfoToSaveXml(XMLElement *dataElement)
+{
+
+	//first, write the basic single-line variables
+	writeElement(dataElement, "playerName", m_playerName);
+	writeElement(dataElement, "playerRank", m_rank);
+	writeElement(dataElement, "money", m_budget);
+	writeElement(dataElement, "payrate", m_payRate);
+	writeElement(dataElement, "tonnageSunk", m_tonnageSunk);
+
+	//selected submarine index isn't normally used
+	writeElement(dataElement, "selectedSubmarineId", m_selectedSubmarine->makeIdHashSalt());
+	writeElement(dataElement, "qualsToHandout", m_qualsToHandout);
+	if (m_startingCampaign == nullptr) 
+	{
+		cout << "fuck campaign is nullptr" << endl;
+	}
+	else
+	{
+		//campaign type causes crash but it doesn't really matter so I'm commenting this out for now
+		writeElement(dataElement, "startingCampaign", m_startingCampaign->getName());
+	}
+	writeElement(dataElement, "faction", m_faction->name());
+
+	//if there are awards that need to be given out, make a new child element for it
+	//if (assignableAwardInfo.size() > 0)
+	//{
+		XMLElement *awardsToGiveOut = dataElement->InsertNewChildElement("awardsToGiveOut");
+		for (int ad = 0; ad < assignableAwardInfo.size(); ad++)
+		{
+			XMLElement *awardNode = awardsToGiveOut->InsertNewChildElement("award");
+			writeElement(awardNode, "awardType", assignableAwardInfo.at(ad).listedAward->name());
+			writeElement(awardNode, "amount", assignableAwardInfo.at(ad).amount);
+			awardsToGiveOut->InsertEndChild(awardNode);
+		}
+
+		dataElement->InsertEndChild(awardsToGiveOut);
+
+	//}
+
+	//time for the complicated stuff.
+
+	//crew members is within playerinfo, so the saving of this part must be managed from inside the playerinfo class
+	XMLElement *hiredCrew = dataElement->InsertNewChildElement("hiredCrew");
+
+	//for each hired crew person, get them to create their own xml section
+	for (int i = 0; i < m_playerEmployees.size(); i++)
+	{
+		m_playerEmployees.at(i).toSaveXml(hiredCrew);
+	}
+
+	//hiredCrew->InsertEndChild(dataElement);
+	dataElement->InsertEndChild(hiredCrew);
+
+	//crew members saved. Now, it's time to save submarine data
+
+	XMLElement *ownedSubmarines = dataElement->InsertNewChildElement("ownedSubmarines");
+
+	for (int i = 0; i < m_submarines.size(); i++)
+	{
+		m_submarines.at(i).toSaveXml(ownedSubmarines, i);
+	}
+
+	//ownedSubmarines->InsertEndChild(dataElement);
+	dataElement->InsertEndChild(ownedSubmarines);
+
+	return 0;
+
+}
+
+//return 0 = success. 1 = failure
+//dataElement is the pointer to the element containing the player info data
+int playerInfo :: playerInfoFromXml(XMLElement *dataElement, SDL_Renderer *ren)
+{
+	m_rank = atoi(dataElement->FirstChildElement("playerRank")->GetText());
+	m_budget = atof(dataElement->FirstChildElement("money")->GetText());
+	m_payRate = atof(dataElement->FirstChildElement("payrate")->GetText());
+	m_tonnageSunk = atof(dataElement->FirstChildElement("tonnageSunk")->GetText());
+	string selectedSubmarineId = dataElement->FirstChildElement("selectedSubmarineId")->GetText();
+	m_qualsToHandout = atoi(dataElement->FirstChildElement("qualsToHandout")->GetText());
+	string factionName = dataElement->FirstChildElement("faction")->GetText();
+	m_faction = getFactionByName(factionName);
+
+	//load assignable awards
+	XMLElement *awardsToGiveOutElement = dataElement->FirstChildElement("awardsToGiveOut")->FirstChildElement("award");
+	while (awardsToGiveOutElement != nullptr)
+	{
+		string type = awardsToGiveOutElement->FirstChildElement("awardType")->GetText();
+		int amount = atoi(awardsToGiveOutElement->FirstChildElement("amount")->GetText());
+		for (int az = 0; az < assignableAwardInfo.size(); az++)
+		{
+			if (assignableAwardInfo.at(az).listedAward->name() == type)
+			{
+				assignableAwardInfo.at(az).amount = amount;
+			}
+		}
+		awardsToGiveOutElement = awardsToGiveOutElement->NextSiblingElement("award");
+	}
+
+	//that was the simple stuff. Now, to do the complicated stuff
+
+	//let's do hired crew first
+	//step 1. for each crew person in the <hiredCrew> element, instantiate them from their respective <crewMember> node and move them to m_barracks
+		XMLElement *hiredCrewElement = dataElement->FirstChildElement("hiredCrew")->FirstChildElement("crewMember");
+		while (hiredCrewElement != nullptr)
+		{
+			//replicate crew person and add to barracks
+			hireSpawnedCrew(crewMember(hiredCrewElement), true);
+			//set pointer to next element in preparation for next iteration
+			hiredCrewElement = hiredCrewElement->NextSiblingElement("crewMember");
+		}
+		//step 1a. create crew person, add them to submarine whatever submarine is loaded into index 0 in the current instance
+		//step 1b. run moveEveryoneToBarracks() on the index 0 submarine instance
+
+	//step 2. import the submarines from the ownedSubmarines node
+
+	//clear current list of submarines. Be sure to check this for bugs because it seems like the type of thing that would cause lots of bugs
+	m_submarines.clear();
+
+	XMLElement *submarineNodes = dataElement->FirstChildElement("ownedSubmarines")->FirstChildElement("submarine");
+	while (submarineNodes != nullptr)
+	{
+		//add submarine to list of player's owned submarines
+
+		m_submarines.push_back(*getSubmarineByName(submarineNodes->FirstChildElement("class")->GetText()));
+		m_submarines.back().loadExtraSubmarineIcons(ren);
+		m_submarines.back().setShipName(submarineNodes->FirstChildElement("shipname")->GetText());
+
+		//now, load the torpedos from the xml file into the submarine
+		int t=0;
+		XMLElement *subTorps = submarineNodes->FirstChildElement("torpedoStorage")->FirstChildElement("torpedo");
+		while (subTorps != nullptr)
+		{
+
+			torpedo *newTorpedo = getTorpedoByName(subTorps->GetText());
+			if (newTorpedo != nullptr) addTorpedoToSubmarineSlot(newTorpedo, &m_submarines.back(), t);
+
+			//set pointer to next element (if it exists)
+			subTorps = subTorps->NextSiblingElement("torpedo");
+
+			//increment pointer to keep the torpedo slots correct
+			t++;
+		}
+
+		//torpedos have been loaded. Now, load submarine upgrades
+		//the last remaining variables (currently just upgrades) get loaded using the submarine class
+		m_submarines.back().loadRestOfStuffFromXml(submarineNodes);
+
+		cout << "there are now " << m_submarines.size() << " submarines loaded into this save file" << endl;
+		m_selectedSubmarine = &m_submarines.back();
+
+/*
+================================================================================================================
+		warning: the code in this block is a big ugly annoying ass fuck
+================================================================================================================
+*/
+
+		//if the submarine being loaded has the same id hash as "selectedSubmarineId", then it may be occupied with crew
+		//in this case, figure out which crew go where
+		if (selectedSubmarineId == m_submarines.back().makeIdHashSalt())
+		{
+			cout << "selected submarine id = " << selectedSubmarineId << endl;
+			XMLElement *compartmentNodes = submarineNodes->FirstChildElement("compartmentData")->FirstChildElement("compartment");
+			while (compartmentNodes != nullptr)
+			{
+				int compIndex = atoi(compartmentNodes->FirstChildElement("index")->GetText());
+				//cout << compartmentNodes->FirstChildElement("slot0")->GetText() << endl;;
+				//cout << "compartment index to check = " << compIndex << endl; 
+				//m_selectedSubmarine->compartmentList.at(compIndex)
+				for (int p=0; p < m_selectedSubmarine->compartmentList.at(compIndex).numSlots(); p++)
+				{
+					//compartmentList.
+					//cout << "checking slot" << p << endl;
+					string correctSlotName = "slot"+to_string(p);
+					if (compartmentNodes->FirstChildElement(correctSlotName.c_str()) != nullptr)
+					{
+						string crewIdHash = compartmentNodes->FirstChildElement(correctSlotName.c_str())->GetText();
+						//cout << "checking slot" << p << " = "<< crewIdHash << endl;
+						if (crewIdHash != "0")
+						{
+							//cout << "crewidhash = " << crewIdHash << endl;
+							//1. find crew with same id in barracks
+							int foundIndexMatch = -1;
+							for (int c = 0; c < m_barracks.numSlots(); c++)
+							{
+								if (m_barracks.crewInSlot(c) != nullptr && m_barracks.crewInSlot(c)->makeIdHashSalt() == crewIdHash)
+								{
+									cout << "is " << crewIdHash << " == " << m_barracks.crewInSlot(c)->makeIdHashSalt() << endl;
+									foundIndexMatch = c;
+									c = m_barracks.numSlots() + 1;
+								}
+							}
+
+							//2. copy pointer into this position in this compartment
+							m_selectedSubmarine->compartmentList.at(compIndex).crewToSlotNumber(m_barracks.crewInSlot(foundIndexMatch), p);
+
+							//3. set original position in barracks to nullptr
+							m_barracks.eraseDuplicateCrew(m_barracks.crewInSlot(foundIndexMatch), -1);
+						}
+					}
+				}
+				
+				//advance the pointer to the next compartment to process
+				compartmentNodes = compartmentNodes->NextSiblingElement("compartment");
+			}
+			//finally, update the submarine display variables to reflect any crew position loading that may have happened
+			m_selectedSubmarine->updateCrewCounts();
+
+/*
+================================================================================================================
+		ok that's the end of the big ugly annoying ass fuck
+================================================================================================================
+*/
+
+		}
+		//set pointer to next element in preparation for next iteration
+		submarineNodes = submarineNodes->NextSiblingElement("submarine");
+	}
+
+	//switch to whatever the saved submarine index is
+	//Be sure to check this for bugs because it seems like the type of thing that would cause lots of bugs
+	m_selectedSubmarine = findSubmarineFromHash(selectedSubmarineId);
+	if (m_selectedSubmarine == nullptr) m_selectedSubmarine = &m_submarines.back();
+
+}
+
+submarine* playerInfo :: findSubmarineFromHash(string hash)
+{
+	for (int i = 0; i < m_submarines.size(); i++)
+	{
+		if (m_submarines.at(i).makeIdHashSalt() == hash)
+		{
+			return &m_submarines.at(i);
+		}
+	}
+
+	cout << "error. Could not find submarine with requested id hash" << endl;
+	return nullptr;
 }

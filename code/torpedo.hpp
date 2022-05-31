@@ -224,8 +224,9 @@ bool torpedo :: drawTorpedoIcon(SDL_Renderer *ren, int posX, int posY, int sizeX
 {
 	//int torpedoSizeX = 173 * gscreenx / 1366;
 	//int torpedoSizeY = 33 * gscreenx / 1366;
-	int torpedoIconX = 173 * 0.924855491 * static_cast<double>(sizeX / 173);
-	int torpedoIconY = 33 * 0.454545455 * static_cast<double>(sizeX / 173);
+	int torpedoIconX = static_cast<double>(173) * 0.924855491 * static_cast<double>(sizeX) / 173;
+	int torpedoIconY = static_cast<double>(33) * 0.454545455 * static_cast<double>(sizeX) / 173;
+	cout << "torpedo x,y=" << torpedoIconX << ", " << torpedoIconY << endl;
 	int torpedoXOffset = (sizeX - torpedoIconX) / 2;
 	int torpedoYOffset = (sizeY - torpedoIconY) / 2;
 
@@ -365,8 +366,16 @@ int loadAllTorpedos(SDL_Renderer *ren)
 	return 0;
 }
 
+//returns nullptr if none found
 torpedo* getTorpedoByName(string name)
 {
+	for (int i = 0; i < torpedoRegistry->size(); i++)
+	{
+		if (torpedoRegistry->at(i).name() == name)
+		{
+			return &torpedoRegistry->at(i);
+		}
+	}
 	return nullptr;
 }
 

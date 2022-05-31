@@ -60,6 +60,64 @@ crewMember :: crewMember(crewNameGenerator *randomNameObject, uint32_t seed)
 	crewAwards = new vector<award*>;
 }
 
+//use this one for instantiating crew nodes from a save file
+crewMember :: crewMember(XMLElement *saveGameElement)
+{
+	cout << "loading a crewMember object from xml save. If the game crashes immediately after this, the reason is an incomplete crew member node" << endl;
+	//assign name and gender in a xml specific way
+	firstname = saveGameElement->FirstChildElement("firstname")->GetText();
+	lastname = saveGameElement->FirstChildElement("lastname")->GetText();
+	gender = atoi(saveGameElement->FirstChildElement("gender")->GetText());
+	age = atoi(saveGameElement->FirstChildElement("age")->GetText());
+
+	skill = atoi(saveGameElement->FirstChildElement("skill")->GetText());
+	wizardingSkill = atoi(saveGameElement->FirstChildElement("wizardingSkill")->GetText());
+	intelligence = atoi(saveGameElement->FirstChildElement("intelligence")->GetText());
+	sexiness = atoi(saveGameElement->FirstChildElement("sex")->GetText());
+	sexualityIndex = atoi(saveGameElement->FirstChildElement("sexualityIndex")->GetText());
+	fetishIndex = atoi(saveGameElement->FirstChildElement("fetishIndex")->GetText());
+	breastSize = saveGameElement->FirstChildElement("breastSize")->GetText();
+	penisLength = atof(saveGameElement->FirstChildElement("penisLength")->GetText());
+	anusType = saveGameElement->FirstChildElement("anusType")->GetText();
+	pubicHair = saveGameElement->FirstChildElement("pubicHair")->GetText();
+	stripperVariant = atoi(saveGameElement->FirstChildElement("stripperVariant")->GetText());
+
+	rank = atoi(saveGameElement->FirstChildElement("rank")->GetText());
+	wage = atof(saveGameElement->FirstChildElement("wage")->GetText());
+
+	//whether or not crew member holds one of these special job classes
+	wizard = stringToBool(saveGameElement->FirstChildElement("wizard")->GetText());
+	scientist = stringToBool(saveGameElement->FirstChildElement("scientist")->GetText());
+
+	setupButtons();
+	m_employedByPlayer = false;
+	m_isSelected = false;
+	m_selectable = false;
+	m_slotNumber = -1;
+	m_init = true;
+	m_infoCardCanDrop = false;
+
+	crewQualifications = new vector<qualification*>;
+	crewAwards = new vector<award*>;
+
+	//if any qualification tags exist, add them to the current crew member
+	XMLElement *qualElement = saveGameElement->FirstChildElement("qualification");
+	while (qualElement != nullptr)
+	{
+		giveQualification(getQualificationById(atoi(qualElement->GetText())));
+		qualElement = qualElement->NextSiblingElement("qualification");
+	}
+
+	//if any award tags exist, add them to the current crew member
+	XMLElement *awardElement = saveGameElement->FirstChildElement("award");
+	while (awardElement != nullptr)
+	{
+		giveAward(getAwardByName(awardElement->GetText()));
+		awardElement = awardElement->NextSiblingElement("award");
+	}
+
+}
+
 //assign name and gender
 void crewMember :: initialSetupStep(crewNameGenerator *randomNameObject, uint32_t seed)
 {
@@ -1048,6 +1106,68 @@ bool crewMember :: isEqualTo(crewMember other)
 	if (m_employedByPlayer != other.employedByPlayer()) return false;
 
 	return true;
+}
+
+//returns a mostly unique id used for saving and loading
+//could be and should be improved in the future
+string crewMember :: makeIdHashSalt()
+{
+	string firstPart = firstname + lastname + to_string(gender);
+	firstPart += to_string(betterRand(skill+wizardingSkill+intelligence+sexiness));
+
+	return firstPart;
+}
+
+//takes a crew person ans saves them to xml in the game-saving function
+int crewMember :: toSaveXml(XMLElement *dataElement)
+{
+	//first, make the encapsulating element
+	XMLElement *crewPerson = dataElement->InsertNewChildElement("crewMember");
+
+	writeElement(crewPerson, "id", makeIdHashSalt());
+
+	//now, write the actual data
+	writeElement(crewPerson, "gender", gender);
+	writeElement(crewPerson, "firstname", firstname);
+	writeElement(crewPerson, "lastname", lastname);
+
+	writeElement(crewPerson, "skill", skill);
+	writeElement(crewPerson, "wizardingSkill", wizardingSkill);
+	writeElement(crewPerson, "intelligence", intelligence);
+	writeElement(crewPerson, "sex", sexiness);
+
+	writeElement(crewPerson, "sexualityIndex", sexualityIndex);
+	writeElement(crewPerson, "fetishIndex", fetishIndex);
+
+	writeElement(crewPerson, "age", age);
+	writeElement(crewPerson, "breastSize", breastSize);
+	writeElement(crewPerson, "penisLength", penisLength);
+	writeElement(crewPerson, "anusType", anusType);
+	writeElement(crewPerson, "pubicHair", pubicHair);
+	writeElement(crewPerson, "stripperVariant", stripperVariant);
+
+	writeElement(crewPerson, "rank", rank);
+	writeElement(crewPerson, "wage", wage);
+	writeElement(crewPerson, "wizard", wizard);
+	writeElement(crewPerson, "scientist", scientist);
+
+	//the main data has been written. Now, we need to save the award and qualification data
+	
+	for (int q = 0; q < crewQualifications->size(); q++)
+	{
+		writeElement(crewPerson, "qualification", crewQualifications->at(q)->type());
+	}
+
+	for (int a = 0; a < crewAwards->size(); a++)
+	{
+		writeElement(crewPerson, "award", crewAwards->at(a)->name());
+	}
+
+	//now close the encapculating element and return to parent subroutine
+	dataElement->InsertEndChild(crewPerson);
+
+	return 0;
+
 }
 
 ostream& operator<<(ostream& os, crewMember operandYeah)

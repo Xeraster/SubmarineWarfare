@@ -340,6 +340,35 @@ void devConsole :: fillTorpedosCommand()
 	}
 }
 
+void devConsole :: saveGame(string input)
+{
+
+	if (!isIngame())
+	{
+		throwError("not in game");
+		return void();
+	}
+	else
+	{
+		//TODO: make it do more filtering out of invalid filenames
+		if (input.size() < 3) input = "you_are_an_idiot";
+		int result = saveToXml(input, playerCampaignInfo);
+
+		if (result == 0)
+		{
+			coloredString msg = "Game has been ";
+			msg += coloredString("saved", color(255,255,100));
+			appendTextToConsole(msg);
+		}
+		else
+		{
+			coloredString msg = "Game save function ";
+			msg += coloredString("reported an error", color(255,100,100));
+			appendTextToConsole(msg);
+		}
+	}
+}
+
 bool devConsole :: parseInput(string input)
 {
 	if (input.substr(0, 6) == "print ")
@@ -400,6 +429,11 @@ bool devConsole :: parseInput(string input)
 	else if (input.substr(0,12) == "filltorpedos")
 	{
 		fillTorpedosCommand();
+		return true;
+	}
+	else if (input.substr(0,8) == "savegame")
+	{
+		saveGame(input.substr(8, input.size()));
 		return true;
 	}
 	//appendTextToConsole(input);

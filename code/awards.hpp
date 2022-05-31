@@ -161,3 +161,17 @@ void getAwardsOfType(int type, vector<award*> *awardArray)
 		}
 	}
 }
+
+award* getAwardByName(string name)
+{
+	for (int i = 0; i < awardRegistry->size(); i++)
+	{
+		if (awardRegistry->at(i).name() == name)
+		{
+			//i = awardRegistry->size() + 1;
+			return &awardRegistry->at(i);
+		}
+	}
+
+	return nullptr;
+}

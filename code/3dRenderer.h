@@ -18,7 +18,7 @@ From Javidx9 :)
 Hello! Ultimately I don't care what you use this for. It's intended to be
 educational, and perhaps to the oddly minded - a little bit of fun.
 Please hack this, change it and use it in any way you see fit. You acknowledge
-that I am not responsible for anything bad that happens as a result of
+that I am not responsible for anything bad that happens as a result oftriangle
 your actions. However this code is protected by GNU GPLv3, see the license in the
 github repo. This means you must attribute me if you use it. You can view this
 license here: https://github.com/OneLoneCoder/videos/blob/master/LICENSE
@@ -106,6 +106,8 @@ using namespace std;
 #define VK_F12 (SDLK_F12 & 0xffff)				  + KEY_OFFSET
 #define VK_MENU (SDLK_MENU & 0xffff)			  + KEY_OFFSET
 
+SDL_Texture *mesh_tex;
+
 struct CHAR_INFO
 {
 	unsigned short glyph;
@@ -174,6 +176,8 @@ constexpr SDL_Color colour_lookup[] = {
 	SDL_Color{ 255,255,0,255 },  // E
 	SDL_Color{ 255,255,255,255 },// F
 };
+
+byte * bytes = nullptr;
 
 class olcSprite
 {
@@ -327,6 +331,7 @@ public:
 	}
 };
 
+
 int len = 0, done = 0, bits = 0, which = 0,
 sample_size = 0, position = 0, rate = 0;
 Sint16 *stream[2];
@@ -353,26 +358,68 @@ struct triangle
 	vec2d t[3]; // added a texture coord per vertex
 	wchar_t sym;
 	short col;
+
+	color triColor; //SDL compatible 32 bit color value as I am phasing out the 16 bit "short col" crap 
+
+	void print()
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			cout << to_string(p[i].x) << "," << to_string(p[i].y) << "," << to_string(p[i].z) << "," << to_string(p[i].w) << "  ";
+		}
+
+		for (int i = 0; i < 3; i++)
+		{
+			cout << to_string(t[i].u) << "," << to_string(t[i].v) << "," << to_string(t[i].w) << "  ";
+		}
+		cout << endl;
+
+		return void();
+	}
 };
 
 struct mesh
 {
 	vector<triangle> tris;
 
-	bool LoadFromObjectFile(string sFilename, bool bHasTexture = false)
+	vector<color> rawTexture; //the texture info in it's rawest, purest, fastest, most uncompressed possible form
+	int texSizeX;
+	int texSizeY;
+
+	//world positioning information
+	double posX = 0;
+	double posY = 0;
+	double posZ = 0;
+	double rotX = 0;
+	double rotY = 0;
+	double rotZ = 0;
+
+	bool LoadFromObjectFile(SDL_Renderer *ren, SDL_Window *win, string sFilename, string textureName = "Textures/error_handling/3dmesh.bmp", bool bHasTexture = true)
 	{
+		//clear the tris
+		tris.clear();
+
 		ifstream f(sFilename);
 		if (!f.is_open())
+		{
+			cout << "!f.is_open()" << endl;
 			return false;
+		}
 
 		// Local cache of verts
 		vector<vec3d> verts;
 		vector<vec2d> texs;
 
+//==============================================
+		//load the 3d obj file
+//==============================================		
 		while (!f.eof())
 		{
-			char line[128];
-			f.getline(line, 128);
+			//string line;
+			//f.getline(line);
+			char line[512];
+			f.getline(line, 512);
+			//cout << line << endl;
 
 			strstream s;
 			s << line;
@@ -404,6 +451,11 @@ struct mesh
 				{
 					int f[3];
 					s >> junk >> f[0] >> f[1] >> f[2];
+					cout << junk << endl;
+					cout << f[0] << endl;
+					cout << f[1] << endl;
+					cout << f[2] << endl;
+					//f[2] = 1;
 					tris.push_back({ verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1] });
 				}
 			}
@@ -412,31 +464,136 @@ struct mesh
 				if (line[0] == 'f')
 				{
 					s >> junk;
-
-					string tokens[6];
+					//string tokens[12];
+					vector<string> tokens;
 					int nTokenCount = -1;
 
 
 					while (!s.eof())
 					{
 						char c = s.get();
+						//cout << c << endl;
 						if (c == ' ' || c == '/')
+						{
 							nTokenCount++;
+							tokens.push_back("");
+						}
 						else
+						{
 							tokens[nTokenCount].append(1, c);
+							//tokens.push_back(to_string(c));
+						}
 					}
+					//cout << "tokens count = " << nTokenCount << endl;
 
-					tokens[nTokenCount].pop_back();
+					//cout << " before push back" << endl;
+					//tokens[nTokenCount].pop_back();
+					tokens.pop_back();
+					//cout << "after push back" << endl;
 
+					//if tokens count > 11, it's something other than a 2 triangle face
+					//NOTE THAT THIS DOESN'T WORK as of right now. For right now, I can't get faces with more than 4 verticies to work correctly. In Blender, you can go to "face>triangulate faces" or "face>tris to quads" to make your 3d model work correctly
+					if (nTokenCount > 11)
+					{
+						cout << "token count > than 11. Processing a multi-triangle face" << endl;
+						//loop that does all except the last one while linking each subsequent triangle to the previous one
+						for (int q = 0; q < nTokenCount-5; q+=6)
+						{
+							tris.push_back({ verts[stoi(tokens[q]) - 1], verts[stoi(tokens[q+3]) - 1], verts[stoi(tokens[q+6]) - 1],
+							texs[stoi(tokens[q+1]) - 1], texs[stoi(tokens[q+4]) - 1], texs[stoi(tokens[q+7]) - 1]});
+						}
 
-					tris.push_back({ verts[stoi(tokens[0]) - 1], verts[stoi(tokens[2]) - 1], verts[stoi(tokens[4]) - 1],
-						texs[stoi(tokens[1]) - 1], texs[stoi(tokens[3]) - 1], texs[stoi(tokens[5]) - 1] });
+						//the part that runs after the loop that links the last triangle to the first triangle
+						tris.push_back({ verts[stoi(tokens[nTokenCount-5]) - 1], verts[stoi(tokens[nTokenCount-2]) - 1], verts[stoi(tokens[0]) - 1],
+						texs[stoi(tokens[nTokenCount-4]) - 1], texs[stoi(tokens[nTokenCount-1]) - 1], texs[stoi(tokens[1]) - 1] });
+					}
+					else if (nTokenCount == 11)
+					{
+						//I can confirm that this at least works for the model. I cannot yet confirm if the texture is appied to the model correctly
+						tris.push_back({ verts[stoi(tokens[0]) - 1], verts[stoi(tokens[3]) - 1], verts[stoi(tokens[6]) - 1],
+						texs[stoi(tokens[1]) - 1], texs[stoi(tokens[4]) - 1], texs[stoi(tokens[7]) - 1]});
+
+						tris.push_back({ verts[stoi(tokens[6]) - 1], verts[stoi(tokens[9]) - 1], verts[stoi(tokens[0]) - 1],
+						texs[stoi(tokens[7]) - 1], texs[stoi(tokens[10]) - 1], texs[stoi(tokens[1]) - 1] });
+
+						/*note that it only works with faces containing only 4 vertices, hence why something like "f 47/48/24 48/47/24 50/49/24 49/50/24" works while something like:
+						f 4/63/31 2/64/31 64/65/31 62/66/31 60/67/31 58/68/31 56/69/31 54/70/31 52/71/31 50/72/31 48/73/31 46/74/31 44/75/31 42/76/31 40/77/31 38/78/31 36/79/31 34/80/31 32/81/31 30/82/31 28/83/31 26/84/31 24/85/31 22/86/31 20/87/31 18/88/31 16/89/31 14/90/31 12/91/31 10/92/31 8/93/31 6/94/31
+						doesn't work
+						the algorithm for loading this seems to be the following:
+						push(v0, v1, v2, t0, t1, t2)
+						push(v3, v4, v5, t3, t4, t5)
+						*/
+					}
+					//if face is a 3 triangle face
+					else
+					{
+						tris.push_back({ verts[stoi(tokens[0]) - 1], verts[stoi(tokens[3]) - 1], verts[stoi(tokens[6]) - 1],
+						texs[stoi(tokens[1]) - 1], texs[stoi(tokens[4]) - 1], texs[stoi(tokens[7]) - 1]});	
+					}
 
 				}
 
 			}
 		}
+//==========================================================
+		//3d obj file done loading. Now, load the texture
+//==========================================================
+		//temporarily load the texture as an SDL texture. This isn't fast enough, however
+		SDL_Texture *fileTex = loadTextureToRam_TA(textureName, ren, win);
+		if (fileTex == nullptr)
+		{
+			cout << "could not find texture " << textureName << ". Loading fallback error texture instead" << endl;
+		}
+
+		//get size of texture because this is important
+		SDL_QueryTexture(fileTex, NULL, NULL, &texSizeX, &texSizeY);
+		int numPixels = (texSizeY * texSizeX);
+		cout << "texture has " << numPixels << " pixels in it and is " << texSizeX << "x" << texSizeY << "in size" << endl;
+
+		//obtain the raw data of the texture and put it into a bytefield
+		//might as well do more calculations now during loading so that less calculations can be done per frame later on
+		//byte * bytes = nullptr;
+		int pitch = 0;
+		SDL_LockTexture(fileTex, nullptr, reinterpret_cast<void **>(&bytes), &pitch);
+
+		//now, add each byte of the texture into the byte vector
+		for (int px = 0; px < numPixels; px++)
+		{
+			int byteNum = px * 4;
+			color newPixel;
+			newPixel.setRed((int)bytes[byteNum+2]);
+			newPixel.setGreen((int)bytes[byteNum+1]);
+			newPixel.setBlue((int)bytes[byteNum]);
+			newPixel.setAlpha((int)bytes[byteNum+3]);
+			rawTexture.push_back(newPixel);
+		}
+
+		//you can either avoid memory leaks or avoid crashing upon program exit but not both
+		//delete bytes;
+		//bytes = nullptr;
 		return true;
+	}
+
+	color texPixelAt(int x, int y)
+	{
+		int num = x + (y*texSizeX);
+		if (num > rawTexture.size()-1) num = num % rawTexture.size();
+		return rawTexture.at(rawTexture.size() - num - 1); 	//for some reason it renders the textures "backwards" unless you do this
+		//return rawTexture.at(num);
+	}
+
+	void print()
+	{
+		for (int i = 0; i < tris.size(); i++)
+		{
+			tris.at(i).print();
+		}
+		return void();
+	}
+
+	void appendRasterInformation(vector<triangle> *vecTrianglesToRaster)
+	{
+		
 	}
 };
 
@@ -525,7 +682,7 @@ public:
 	}
 
 	//used as-is in olc3d.cpp despite it notbeing declared in the child class defines in olc3d.cpp
-	/*virtual */void Draw(int x, int y, wchar_t c = PIXEL_SOLID, short col = 0x000F)
+	void Draw(int x, int y, wchar_t c = PIXEL_SOLID, short col = 0x000F)
 	{
 		drawPixel(m_render, x, y, colorByteToRGB(col));
 		/*if (x >= 0 && x < m_nScreenWidth && y >= 0 && y < m_nScreenHeight)
@@ -535,6 +692,13 @@ public:
 		}*/
 	}
 
+	//override for draw that uses color as an input
+	void Draw(int x, int y, color pixelColor)
+	{
+		drawPixel(m_render, x, y, pixelColor);
+	}
+
+	//doesn't get used anymore
 	void Fill(int x1, int y1, int x2, int y2, wchar_t c = PIXEL_SOLID, short col = 0x000F)
 	{
 		Clip(x1, y1);
@@ -568,6 +732,7 @@ public:
 
 	}
 
+	//doesn't get used anymore
 	void DrawString(int x, int y, std::wstring c, short col = 0x000F)
 	{
 		for (size_t i = 0; i < c.size(); i++)
@@ -577,6 +742,7 @@ public:
 		}
 	}
 
+	//doesn't get used anymore
 	void DrawStringAlpha(int x, int y, std::wstring c, short col = 0x000F)
 	{
 		for (size_t i = 0; i < c.size(); i++)
@@ -589,6 +755,7 @@ public:
 		}
 	}
 
+	//i'm fairly certain this doesn't get used anymore
 	void Clip(int &x, int &y)
 	{
 		if (x < 0) x = 0;
@@ -796,7 +963,7 @@ public:
 	//deconstructor
 	~olcEngine3D()
 	{
-
+		//delete [] meshesToRender;
 	}
 
 public:
@@ -830,6 +997,7 @@ public:
 		//GameThread();
 		// Wait for thread to be exited
 		//t.join();
+		OnUserCreate();
 	}
 
 	int ScreenWidth()
@@ -903,7 +1071,9 @@ public:
 		// Create user resources as part of this thread
 		//if (!OnUserCreate())
 			//m_bAtomActive = false;
-		OnUserCreate();
+		
+		//OnUserCreate only needs to be run once upon enabling the 3d renderer
+		//OnUserCreate();
 
 		//auto tp1 = std::chrono::system_clock::now();
 		//auto tp2 = std::chrono::system_clock::now();
@@ -1237,6 +1407,8 @@ public:
 	sKeyState GetMouse(int nMouseButtonID) { return m_mouse[nMouseButtonID]; }
 	bool IsFocused() { return m_bConsoleInFocus; }
 
+	vector<mesh*> meshesToRender;
+
 protected:
 	int Error(const wchar_t *msg)
 	{
@@ -1274,10 +1446,12 @@ protected:
 	}
 
 	// https://www.avrfreaks.net/sites/default/files/triangles.c
-	void FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, short c = 0x2588, short col = 0x000F)
+	//void FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, short c = 0x2588, short col = 0x000F)
+	void FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, color col)
 	{
 		auto SWAP = [](int &x, int &y) { int t = x; x = y; y = t; };
-		auto drawline = [&](int sx, int ex, int ny) { for (int i = sx; i <= ex; i++) Draw(i, ny, c, col); };
+		//auto drawline = [&](int sx, int ex, int ny) { for (int i = sx; i <= ex; i++) Draw(i, ny, c, col); };
+		auto drawline = [&](int sx, int ex, int ny) { for (int i = sx; i <= ex; i++) Draw(i, ny, col); };
 
 		int t1x, t2x, y, minx, maxx, t1xp, t2xp;
 		bool changed1 = false;
@@ -1433,6 +1607,9 @@ private:
 	SDL_Texture* m_fontFile;
 
 	mesh meshCube;
+	mesh bouy;
+	mesh traffic_cone;
+
 	mat4x4 matProj;	// Matrix that converts from view space to screen space
 	vec3d vCamera;	// Location of camera in world space
 	vec3d vLookDir;	// Direction vector along the direction camera points
@@ -1697,6 +1874,7 @@ private:
 			// Copy appearance info to new triangle
 			out_tri1.col =  in_tri.col;
 			out_tri1.sym = in_tri.sym;
+			out_tri1.triColor = in_tri.triColor; //remember to copy the 32 bit color information or else textures won't display correctly when a triangle is clipped (i.e. when a mesh touches or goes over the screen edge)
 
 			// The inside point is valid, so keep that...
 			out_tri1.p[0] = *inside_points[0];
@@ -1727,9 +1905,11 @@ private:
 			// Copy appearance info to new triangles
 			out_tri1.col =  in_tri.col;
 			out_tri1.sym = in_tri.sym;
+			out_tri1.triColor = in_tri.triColor; //remember to copy the 32 bit color information or else textures won't display correctly when a triangle is clipped (i.e. when a mesh touches or goes over the screen edge)
 
 			out_tri2.col =  in_tri.col;
 			out_tri2.sym = in_tri.sym;
+			out_tri2.triColor = in_tri.triColor;
 
 			// The first triangle consists of the two inside points and a new
 			// point determined by the location where one side of the triangle
@@ -1798,6 +1978,15 @@ private:
 		return c;
 	}
 
+	//like the CHAR_INFO GetColor except it returns a 32 bit color value
+	color GetColor32(float lum)
+	{
+		int pixel_bw = (int)(255.0f*lum);
+		//cout << "pixel_bw = " << pixel_bw << endl;
+		color luminalColor(pixel_bw, pixel_bw, pixel_bw);
+		return luminalColor;
+	}
+
 	float *pDepthBuffer = nullptr;
 
 public:
@@ -1813,7 +2002,8 @@ public:
 		// Load object file
 		//meshCube.LoadFromObjectFile("mountains.obj");
 
-		meshCube.tris = {
+		cout << "loading tris into meshCube" << endl;
+		/*meshCube.tris = {
 
 		// SOUTH
 		{ 0.0f, 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f, 1.0f,    1.0f, 1.0f, 0.0f, 1.0f,		0.0f, 1.0f, 1.0f,		0.0f, 0.0f, 1.0f,		1.0f, 0.0f, 1.0f,}, 
@@ -1839,84 +2029,36 @@ public:
 		{ 1.0f, 0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 0.0f, 1.0f,		0.0f, 1.0f, 1.0f,		0.0f, 0.0f, 1.0f,		1.0f, 0.0f, 1.0f,},
 		{ 1.0f, 0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 0.0f, 1.0f,    1.0f, 0.0f, 0.0f, 1.0f,		0.0f, 1.0f, 1.0f,		1.0f, 0.0f, 1.0f,		1.0f, 1.0f, 1.0f,},
 
-		};
+		};*/
+		//meshCube.LoadFromObjectFile(m_render, m_window, "bouy.obj","dotgrid.bmp",true);
+		//meshCube.LoadFromObjectFile(m_render, m_window, "Mesh/Misc/Traffic_Cone/Traffic_Cone.obj","Mesh/Misc/Traffic_Cone/Traffic_Cone.bmp",true);
+		traffic_cone.LoadFromObjectFile(m_render, m_window, "Mesh/Misc/Traffic_Cone/Traffic_Cone.obj","Mesh/Misc/Traffic_Cone/Traffic_Cone.bmp",true);
+		//bouy.LoadFromObjectFile(m_render, m_window, "Mesh/Misc/Bouy/bouy.obj","Mesh/Misc/Bouy/dotgrid.bmp",true);
+		//bouy.LoadFromObjectFile(m_render, m_window, "Mesh/Ordinance/Torpedo/torpedo.obj","Mesh/Ordinance/Torpedo/torpedo_lowres.bmp",true);
+		bouy.LoadFromObjectFile(m_render, m_window, "Mesh/Submarines/mahecha.obj","Mesh/Ordinance/Torpedo/mahecha_texture_128.png",true);
+
+
+		//meshesToRender = new vector<mesh*>();
+		//meshesToRender.push_back(&meshCube);
+		meshesToRender.push_back(&traffic_cone);
+		meshesToRender.push_back(&bouy);
+		bouy.posZ = 20;
+
+		//meshCube.print();
 
 		delete sprTex1;
 		sprTex1 = new olcSprite(L"Jario.spr");
+		mesh_tex = loadTextureToRam_TA("dotgrid.bmp", m_render, m_window);
 
 		// Projection Matrix
 		matProj = Matrix_MakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
 		return true;
 	}
 
-	//made into non override
-	bool OnUserUpdate(float fElapsedTime)// override
+	void appendRasterInformation(vector<triangle> *vecTrianglesToRaster, mesh *meshToProcess, mat4x4 matView, mat4x4 matWorld)
 	{
-		if (GetKey(VK_UP).bHeld)
-			vCamera.y += 8.0f * fElapsedTime;	// Travel Upwards
-
-		if (GetKey(VK_DOWN).bHeld)
-			vCamera.y -= 8.0f * fElapsedTime;	// Travel Downwards
-
-
-		// Dont use these two in FPS mode, it is confusing :P
-		if (GetKey(VK_LEFT).bHeld)
-			vCamera.x -= 8.0f * fElapsedTime;	// Travel Along X-Axis
-
-		if (GetKey(VK_RIGHT).bHeld)
-			vCamera.x += 8.0f * fElapsedTime;	// Travel Along X-Axis
-		///////
-
-
-		vec3d vForward = Vector_Mul(vLookDir, 8.0f * fElapsedTime);
-
-		// Standard FPS Control scheme, but turn instead of strafe
-		if (GetKey(L'W').bHeld)
-			vCamera = Vector_Add(vCamera, vForward);
-
-		if (GetKey(L'S').bHeld)
-			vCamera = Vector_Sub(vCamera, vForward);
-
-		if (GetKey(L'A').bHeld)
-			fYaw -= 2.0f * fElapsedTime;
-
-		if (GetKey(L'D').bHeld)
-			fYaw += 2.0f * fElapsedTime;
-
-
-		
-
-		// Set up "World Tranmsform" though not updating theta 
-		// makes this a bit redundant
-		mat4x4 matRotZ, matRotX;
-		fTheta += 1.0f * fElapsedTime; // Uncomment to spin me right round baby right round
-		matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
-		matRotX = Matrix_MakeRotationX(fTheta);
-
-		mat4x4 matTrans;
-		matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 5.0f);
-
-		mat4x4 matWorld;
-		matWorld = Matrix_MakeIdentity();	// Form World Matrix
-		matWorld = Matrix_MultiplyMatrix(matRotZ, matRotX); // Transform by rotation
-		matWorld = Matrix_MultiplyMatrix(matWorld, matTrans); // Transform by translation
-
-		// Create "Point At" Matrix for camera
-		vec3d vUp = { 0,1,0 };
-		vec3d vTarget = { 0,0,1 };
-		mat4x4 matCameraRot = Matrix_MakeRotationY(fYaw);
-		vLookDir = Matrix_MultiplyVector(matCameraRot, vTarget);
-		vTarget = Vector_Add(vCamera, vLookDir);
-		mat4x4 matCamera = Matrix_PointAt(vCamera, vTarget, vUp);
-
-		// Make view matrix from camera
-		mat4x4 matView = Matrix_QuickInverse(matCamera);
-
-		// Store triagles for rastering later
-		vector<triangle> vecTrianglesToRaster;
-
-		// Draw Triangles
-		for (auto tri : meshCube.tris)
+		for (auto tri : meshToProcess->tris)
+		//for (auto tri : meshCube.tris)
 		{
 			triangle triProjected, triTransformed, triViewed;
 
@@ -1960,6 +2102,7 @@ public:
 				//triTransformed.sym = c.Char.UnicodeChar;
 				triTransformed.sym = c.glyph;
 				triTransformed.col = c.colour;
+				triTransformed.triColor = GetColor32(dp);
 
 				// Convert World Space --> View Space
 				triViewed.p[0] = Matrix_MultiplyVector(matView, triTransformed.p[0]);
@@ -1967,6 +2110,7 @@ public:
 				triViewed.p[2] = Matrix_MultiplyVector(matView, triTransformed.p[2]);
 				triViewed.sym = triTransformed.sym;
 				triViewed.col = triTransformed.col;
+				triViewed.triColor = triTransformed.triColor; //remember to copy the 32 bit color over to the viewed triangle
 				triViewed.t[0] = triTransformed.t[0];
 				triViewed.t[1] = triTransformed.t[1];
 				triViewed.t[2] = triTransformed.t[2];
@@ -1987,6 +2131,7 @@ public:
 					triProjected.p[2] = Matrix_MultiplyVector(matProj, clipped[n].p[2]);
 					triProjected.col = clipped[n].col;
 					triProjected.sym = clipped[n].sym;
+					triProjected.triColor = clipped[n].triColor;
 					triProjected.t[0] = clipped[n].t[0];
 					triProjected.t[1] = clipped[n].t[1];
 					triProjected.t[2] = clipped[n].t[2];
@@ -2033,33 +2178,14 @@ public:
 					triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
 
 					// Store triangle for sorting
-					vecTrianglesToRaster.push_back(triProjected);
+					vecTrianglesToRaster->push_back(triProjected);
 				}			
 			}
 		}
+	}
 
-		// Sort triangles from back to front
-		/*sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle &t1, triangle &t2)
-		{
-			float z1 = (t1.p[0].z + t1.p[1].z + t1.p[2].z) / 3.0f;
-			float z2 = (t2.p[0].z + t2.p[1].z + t2.p[2].z) / 3.0f;
-			return z1 > z2;
-		});*/
-
-		// Clear Screen
-		//NOTE: Change this to whatever code it takes to draw the sky
-		//Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_CYAN);
-		drawGradient(m_render, 0, 0, ScreenWidth(), ScreenHeight(), 10);
-		//SDL_SetRenderTarget(m_render, m_screen);
-		//drawSkyBackground(0, 0, ScreenWidth(), ScreenHeight(), 10);
-		//SDL_SetRenderTarget(m_render, nullptr);
-		//SDL_RenderCopy(m_render, m_screen, nullptr, nullptr);
-
-		// Clear Depth Buffer
-		for (int i = 0; i < ScreenWidth()*ScreenHeight(); i++)
-			pDepthBuffer[i] = 0.0f;
-
-
+	void rasterAllVectors(vector<triangle> vecTrianglesToRaster, mesh *meshToProcess)
+	{
 		// Loop through all transformed, viewed, projected, and sorted triangles
 		for (auto &triToRaster : vecTrianglesToRaster)
 		{
@@ -2111,12 +2237,333 @@ public:
 			{
 				TexturedTriangle(t.p[0].x, t.p[0].y, t.t[0].u, t.t[0].v, t.t[0].w,
 					t.p[1].x, t.p[1].y, t.t[1].u, t.t[1].v, t.t[1].w,
-					t.p[2].x, t.p[2].y, t.t[2].u, t.t[2].v, t.t[2].w, sprTex1);
+					t.p[2].x, t.p[2].y, t.t[2].u, t.t[2].v, t.t[2].w, meshToProcess, t.triColor);
 				
 				//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, t.sym, t.col);
-				DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_WHITE);
+				//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, t.triColor);
+				//DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_WHITE);
 			}
 		}
+	}
+
+	//made into non override
+	bool OnUserUpdate(float fElapsedTime)// override
+	{
+		if (GetKey(VK_UP).bHeld)
+			vCamera.y += 8.0f * fElapsedTime;	// Travel Upwards
+
+		if (GetKey(VK_DOWN).bHeld)
+			vCamera.y -= 8.0f * fElapsedTime;	// Travel Downwards
+
+
+		// Dont use these two in FPS mode, it is confusing :P
+		if (GetKey(VK_LEFT).bHeld)
+			vCamera.x -= 8.0f * fElapsedTime;	// Travel Along X-Axis
+
+		if (GetKey(VK_RIGHT).bHeld)
+			vCamera.x += 8.0f * fElapsedTime;	// Travel Along X-Axis
+		///////
+
+
+		vec3d vForward = Vector_Mul(vLookDir, 8.0f * fElapsedTime);
+
+		// Standard FPS Control scheme, but turn instead of strafe
+		if (GetKey(L'W').bHeld)
+			vCamera = Vector_Add(vCamera, vForward);
+
+		if (GetKey(L'S').bHeld)
+			vCamera = Vector_Sub(vCamera, vForward);
+
+		if (GetKey(L'A').bHeld)
+			fYaw -= 2.0f * fElapsedTime;
+
+		if (GetKey(L'D').bHeld)
+			fYaw += 2.0f * fElapsedTime;
+
+
+		
+
+		// Set up "World Tranmsform" though not updating theta 
+		// makes this a bit redundant
+		/*mat4x4 matRotZ, matRotX;
+		fTheta += 1.0f * fElapsedTime; // Uncomment to spin me right round baby right round
+		matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
+		matRotX = Matrix_MakeRotationX(fTheta);
+
+		mat4x4 matTrans;
+		matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 5.0f);
+
+		mat4x4 matWorld;
+		matWorld = Matrix_MakeIdentity();	// Form World Matrix
+		matWorld = Matrix_MultiplyMatrix(matRotZ, matRotX); // Transform by rotation
+		matWorld = Matrix_MultiplyMatrix(matWorld, matTrans); // Transform by translation
+
+		// Create "Point At" Matrix for camera
+		vec3d vUp = { 0,1,0 };
+		vec3d vTarget = { 0,0,1 };
+		mat4x4 matCameraRot = Matrix_MakeRotationY(fYaw);
+		vLookDir = Matrix_MultiplyVector(matCameraRot, vTarget);
+		vTarget = Vector_Add(vCamera, vLookDir);
+		mat4x4 matCamera = Matrix_PointAt(vCamera, vTarget, vUp);
+
+		// Make view matrix from camera
+		mat4x4 matView = Matrix_QuickInverse(matCamera);*/
+
+		// Store triagles for rastering later
+		//vector<triangle> vecTrianglesToRaster;
+
+		drawGradient(m_render, 0, 0, ScreenWidth(), ScreenHeight(), 10);
+
+		fTheta += 1.0f * fElapsedTime; // Uncomment to spin me right round baby right round
+
+		// Clear Depth Buffer
+		for (int i = 0; i < ScreenWidth()*ScreenHeight(); i++)
+			pDepthBuffer[i] = 0.0f;
+
+		// Draw Triangles
+		//this works there's just gb upon gbs worth of memory leaks
+		for (int e = 0; e < meshesToRender.size(); e++)
+		{
+			// Set up "World Tranmsform" though not updating theta 
+			// makes this a bit redundant
+			mat4x4 matRotZ, matRotX;
+			matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
+			matRotX = Matrix_MakeRotationX(fTheta);
+
+			mat4x4 matTrans;
+			matTrans = Matrix_MakeTranslation(meshesToRender.at(e)->posX, meshesToRender.at(e)->posY, meshesToRender.at(e)->posZ + 5);
+
+			mat4x4 matWorld;
+			matWorld = Matrix_MakeIdentity();	// Form World Matrix
+			matWorld = Matrix_MultiplyMatrix(matRotZ, matRotX); // Transform by rotation
+			matWorld = Matrix_MultiplyMatrix(matWorld, matTrans); // Transform by translation
+
+			// Create "Point At" Matrix for camera
+			vec3d vUp = { 0,1,0 };
+			vec3d vTarget = { 0,0,1 };
+			mat4x4 matCameraRot = Matrix_MakeRotationY(fYaw);
+			vLookDir = Matrix_MultiplyVector(matCameraRot, vTarget);
+			vTarget = Vector_Add(vCamera, vLookDir);
+			mat4x4 matCamera = Matrix_PointAt(vCamera, vTarget, vUp);
+
+			// Make view matrix from camera
+			mat4x4 matView = Matrix_QuickInverse(matCamera);
+
+			//Store triagles for rastering later
+			vector<triangle> vecTrianglesToRaster;
+
+			appendRasterInformation(&vecTrianglesToRaster, meshesToRender.at(e), matView, matWorld);
+
+			rasterAllVectors(vecTrianglesToRaster, meshesToRender.at(e));
+
+			//meshesToRender.at(e)->appendRasterInformation(&vecTrianglesToRaster);
+		/*for (auto tri : meshesToRender.at(e)->tris)
+		//for (auto tri : meshCube.tris)
+		{
+			triangle triProjected, triTransformed, triViewed;
+
+			// World Matrix Transform
+			triTransformed.p[0] = Matrix_MultiplyVector(matWorld, tri.p[0]);
+			triTransformed.p[1] = Matrix_MultiplyVector(matWorld, tri.p[1]);
+			triTransformed.p[2] = Matrix_MultiplyVector(matWorld, tri.p[2]);
+			triTransformed.t[0] = tri.t[0];
+			triTransformed.t[1] = tri.t[1];
+			triTransformed.t[2] = tri.t[2];
+
+			// Calculate triangle Normal
+			vec3d normal, line1, line2;
+
+			// Get lines either side of triangle
+			line1 = Vector_Sub(triTransformed.p[1], triTransformed.p[0]);
+			line2 = Vector_Sub(triTransformed.p[2], triTransformed.p[0]);
+
+			// Take cross product of lines to get normal to triangle surface
+			normal = Vector_CrossProduct(line1, line2);
+
+			// You normally need to normalise a normal!
+			normal = Vector_Normalise(normal);
+			
+			// Get Ray from triangle to camera
+			vec3d vCameraRay = Vector_Sub(triTransformed.p[0], vCamera);
+
+			// If ray is aligned with normal, then triangle is visible
+			if (Vector_DotProduct(normal, vCameraRay) < 0.0f)
+			{
+				// Illumination
+				vec3d light_direction = { 0.0f, 1.0f, -1.0f };
+				light_direction = Vector_Normalise(light_direction);
+
+				// How "aligned" are light direction and triangle surface normal?
+				float dp = max(0.1f, Vector_DotProduct(light_direction, normal));
+
+				// Choose console colours as required (much easier with RGB)
+				CHAR_INFO c = GetColour(dp);
+				//triTransformed.col = c.Attributes;
+				//triTransformed.sym = c.Char.UnicodeChar;
+				triTransformed.sym = c.glyph;
+				triTransformed.col = c.colour;
+				triTransformed.triColor = GetColor32(dp);
+
+				// Convert World Space --> View Space
+				triViewed.p[0] = Matrix_MultiplyVector(matView, triTransformed.p[0]);
+				triViewed.p[1] = Matrix_MultiplyVector(matView, triTransformed.p[1]);
+				triViewed.p[2] = Matrix_MultiplyVector(matView, triTransformed.p[2]);
+				triViewed.sym = triTransformed.sym;
+				triViewed.col = triTransformed.col;
+				triViewed.triColor = triTransformed.triColor; //remember to copy the 32 bit color over to the viewed triangle
+				triViewed.t[0] = triTransformed.t[0];
+				triViewed.t[1] = triTransformed.t[1];
+				triViewed.t[2] = triTransformed.t[2];
+
+				// Clip Viewed Triangle against near plane, this could form two additional
+				// additional triangles. 
+				int nClippedTriangles = 0;
+				triangle clipped[2];
+				nClippedTriangles = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.1f }, { 0.0f, 0.0f, 1.0f }, triViewed, clipped[0], clipped[1]);
+
+				// We may end up with multiple triangles form the clip, so project as
+				// required
+				for (int n = 0; n < nClippedTriangles; n++)
+				{
+					// Project triangles from 3D --> 2D
+					triProjected.p[0] = Matrix_MultiplyVector(matProj, clipped[n].p[0]);
+					triProjected.p[1] = Matrix_MultiplyVector(matProj, clipped[n].p[1]);
+					triProjected.p[2] = Matrix_MultiplyVector(matProj, clipped[n].p[2]);
+					triProjected.col = clipped[n].col;
+					triProjected.sym = clipped[n].sym;
+					triProjected.triColor = clipped[n].triColor;
+					triProjected.t[0] = clipped[n].t[0];
+					triProjected.t[1] = clipped[n].t[1];
+					triProjected.t[2] = clipped[n].t[2];
+
+
+					triProjected.t[0].u = triProjected.t[0].u / triProjected.p[0].w;
+					triProjected.t[1].u = triProjected.t[1].u / triProjected.p[1].w;
+					triProjected.t[2].u = triProjected.t[2].u / triProjected.p[2].w;
+
+					triProjected.t[0].v = triProjected.t[0].v / triProjected.p[0].w;
+					triProjected.t[1].v = triProjected.t[1].v / triProjected.p[1].w;
+					triProjected.t[2].v = triProjected.t[2].v / triProjected.p[2].w;
+
+					triProjected.t[0].w = 1.0f / triProjected.p[0].w;
+					triProjected.t[1].w = 1.0f / triProjected.p[1].w;
+					triProjected.t[2].w = 1.0f / triProjected.p[2].w;
+
+
+					// Scale into view, we moved the normalising into cartesian space
+					// out of the matrix.vector function from the previous videos, so
+					// do this manually
+					triProjected.p[0] = Vector_Div(triProjected.p[0], triProjected.p[0].w);
+					triProjected.p[1] = Vector_Div(triProjected.p[1], triProjected.p[1].w);
+					triProjected.p[2] = Vector_Div(triProjected.p[2], triProjected.p[2].w);
+
+					// X/Y are inverted so put them back
+					triProjected.p[0].x *= -1.0f;
+					triProjected.p[1].x *= -1.0f;
+					triProjected.p[2].x *= -1.0f;
+					triProjected.p[0].y *= -1.0f;
+					triProjected.p[1].y *= -1.0f;
+					triProjected.p[2].y *= -1.0f;
+
+					// Offset verts into visible normalised space
+					vec3d vOffsetView = { 1,1,0 };
+					triProjected.p[0] = Vector_Add(triProjected.p[0], vOffsetView);
+					triProjected.p[1] = Vector_Add(triProjected.p[1], vOffsetView);
+					triProjected.p[2] = Vector_Add(triProjected.p[2], vOffsetView);
+					triProjected.p[0].x *= 0.5f * (float)ScreenWidth();
+					triProjected.p[0].y *= 0.5f * (float)ScreenHeight();
+					triProjected.p[1].x *= 0.5f * (float)ScreenWidth();
+					triProjected.p[1].y *= 0.5f * (float)ScreenHeight();
+					triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
+					triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
+
+					// Store triangle for sorting
+					vecTrianglesToRaster.push_back(triProjected);
+				}			
+			}
+		}*/
+		}
+
+		// Sort triangles from back to front
+		/*sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle &t1, triangle &t2)
+		{
+			float z1 = (t1.p[0].z + t1.p[1].z + t1.p[2].z) / 3.0f;
+			float z2 = (t2.p[0].z + t2.p[1].z + t2.p[2].z) / 3.0f;
+			return z1 > z2;
+		});*/
+
+		// Clear Screen
+		//NOTE: Change this to whatever code it takes to draw the sky
+		//Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_CYAN);
+		//SDL_SetRenderTarget(m_render, m_screen);
+		//drawSkyBackground(0, 0, ScreenWidth(), ScreenHeight(), 10);
+		//SDL_SetRenderTarget(m_render, nullptr);
+		//SDL_RenderCopy(m_render, m_screen, nullptr, nullptr);
+
+		//moving this
+		// Clear Depth Buffer
+		//for (int i = 0; i < ScreenWidth()*ScreenHeight(); i++)
+			//pDepthBuffer[i] = 0.0f;
+
+
+		// Loop through all transformed, viewed, projected, and sorted triangles
+		/*for (auto &triToRaster : vecTrianglesToRaster)
+		{
+			// Clip triangles against all four screen edges, this could yield
+			// a bunch of triangles, so create a queue that we traverse to 
+			//  ensure we only test new triangles generated against planes
+			triangle clipped[2];
+			list<triangle> listTriangles;
+
+			// Add initial triangle
+			listTriangles.push_back(triToRaster);
+			int nNewTriangles = 1;
+
+			for (int p = 0; p < 4; p++)
+			{
+				int nTrisToAdd = 0;
+				while (nNewTriangles > 0)
+				{
+					// Take triangle from front of queue
+					triangle test = listTriangles.front();
+					listTriangles.pop_front();
+					nNewTriangles--;
+
+					// Clip it against a plane. We only need to test each 
+					// subsequent plane, against subsequent new triangles
+					// as all triangles after a plane clip are guaranteed
+					// to lie on the inside of the plane. I like how this
+					// comment is almost completely and utterly justified
+					switch (p)
+					{
+					case 0:	nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+					case 1:	nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, (float)ScreenHeight() - 1, 0.0f }, { 0.0f, -1.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+					case 2:	nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+					case 3:	nTrisToAdd = Triangle_ClipAgainstPlane({ (float)ScreenWidth() - 1, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+					}
+
+					// Clipping may yield a variable number of triangles, so
+					// add these new ones to the back of the queue for subsequent
+					// clipping against next planes
+					for (int w = 0; w < nTrisToAdd; w++)
+						listTriangles.push_back(clipped[w]);
+				}
+				nNewTriangles = listTriangles.size();
+			}
+
+
+			// Draw the transformed, viewed, clipped, projected, sorted, clipped triangles
+			for (auto &t : listTriangles)
+			{
+				TexturedTriangle(t.p[0].x, t.p[0].y, t.t[0].u, t.t[0].v, t.t[0].w,
+					t.p[1].x, t.p[1].y, t.t[1].u, t.t[1].v, t.t[1].w,
+					t.p[2].x, t.p[2].y, t.t[2].u, t.t[2].v, t.t[2].w, mesh_tex, t.triColor);
+				
+				//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, t.sym, t.col);
+				//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, t.triColor);
+				//DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_WHITE);
+			}
+		}*/
 
 
 		return true;
@@ -2134,7 +2581,7 @@ public:
 	void TexturedTriangle(	int x1, int y1, float u1, float v1, float w1,
 							int x2, int y2, float u2, float v2, float w2,
 							int x3, int y3, float u3, float v3, float w3,
-		olcSprite *tex)
+		mesh *theMesh, color luminance)
 	{
 		if (y2 < y1)
 		{
@@ -2228,9 +2675,19 @@ public:
 					tex_u = (1.0f - t) * tex_su + t * tex_eu;
 					tex_v = (1.0f - t) * tex_sv + t * tex_ev;
 					tex_w = (1.0f - t) * tex_sw + t * tex_ew;
+					
+					//tex_u needs to be multiplied by texture width
+					//tex_u needs to be multiplied by texture height
+					tex_u *= theMesh->texSizeX;
+					tex_v *= theMesh->texSizeY;
+
 					if (tex_w > pDepthBuffer[i*ScreenWidth() + j])
 					{
-						Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
+						//the texture/surface drawing line. Commenting out this, as well as the other line with this comment makes surfaces not be drawn
+						//Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
+						Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
 						pDepthBuffer[i*ScreenWidth() + j] = tex_w;
 					}
 					t += tstep;
@@ -2288,10 +2745,22 @@ public:
 					tex_u = (1.0f - t) * tex_su + t * tex_eu;
 					tex_v = (1.0f - t) * tex_sv + t * tex_ev;
 					tex_w = (1.0f - t) * tex_sw + t * tex_ew;
+					//cout << "tex_u = " << to_string(tex_u);
+					//cout << ", tex_v = " << to_string(tex_v);
+					//cout << ", tex_w = " << to_string(tex_w) << endl;
+
+					//tex_u needs to be multiplied by texture width
+					//tex_u needs to be multiplied by texture height
+					tex_u *= theMesh->texSizeX;
+					tex_v *= theMesh->texSizeY;
 
 					if (tex_w > pDepthBuffer[i*ScreenWidth() + j])
 					{
-						Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
+						//the texture/surface drawing line. Commenting out this, as well as the other line with this comment makes surfaces not be drawn
+						//Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
+						Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
 						pDepthBuffer[i*ScreenWidth() + j] = tex_w;
 					}
 					t += tstep;

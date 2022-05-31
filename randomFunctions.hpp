@@ -1,3 +1,92 @@
+SDL_Texture* loadTextureToRam(string texturePath, SDL_Renderer *ren)
+{
+	SDL_Texture *tempPointer;
+	SDL_Surface *tempBmp = IMG_Load(texturePath.c_str());
+	tempPointer = SDL_CreateTextureFromSurface(ren, tempBmp);
+	SDL_FreeSurface(tempBmp);
+	return tempPointer;
+}
+
+//load texture into ram with texture access flag
+SDL_Texture* loadTextureToRam_TA(string texturePath, SDL_Renderer* ren, SDL_Window* win)
+{
+	SDL_Texture *tempPointer;
+	SDL_Surface *loadedSurf = IMG_Load(texturePath.c_str());
+	void *mPixels;
+	int mPitch;
+	if (loadedSurf == NULL) 
+	{
+		cout << "error. Attempted to load " << texturePath << " but surface is null. Does the file exist?" << endl;
+		//return nullptr;
+	}
+	else
+	{
+		SDL_Surface *formattedSurf = SDL_ConvertSurfaceFormat(loadedSurf, SDL_GetWindowPixelFormat(win), 0);
+		if (formattedSurf == NULL)
+		{
+			cout << "error. Unable to convert loaded surface to display format" << endl;
+			//return nullptr;
+		}
+		else
+		{
+			//create blank streamable texture
+			tempPointer = SDL_CreateTexture(ren, SDL_GetWindowPixelFormat(win), SDL_TEXTUREACCESS_STREAMING, formattedSurf->w, formattedSurf->h);
+
+			//lock texture for manipulation
+			SDL_LockTexture(tempPointer, NULL, &mPixels, &mPitch);
+
+			//copy the loaded/formatted surface pixels
+			memcpy(mPixels, formattedSurf->pixels, formattedSurf->pitch * formattedSurf->h);
+
+			//unlock the texture to update
+			SDL_UnlockTexture(tempPointer);
+
+		}
+
+		//free the surface to avoid memory leaks
+		SDL_FreeSurface(formattedSurf);
+	}
+	return tempPointer;
+}
+
+color pixelAtPos(SDL_Texture *tex, SDL_Renderer* ren, SDL_Window* win, int x, int y)
+{
+	byte * bytes= nullptr;
+	int pitch = 0;
+	SDL_Rect area;
+	area.x=x;
+	area.y=y;
+	area.w=1;
+	area.h=1;
+	const SDL_Rect hackRect = area;
+
+	//seems to be 4 bytes per pixel. Seems to go b,g,r,a?
+	SDL_LockTexture(tex, nullptr, reinterpret_cast<void **>(&bytes), &pitch);
+	//SDL_LockTexture(tex, &hackRect, reinterpret_cast<void **>(&bytes), &pitch);
+
+	//cout << (int *)bytes[0] << endl;
+	//cout << "pitch = " << pitch << endl;
+	int blue = 0;
+	int green = 0;
+	int red = 0;
+	int alpha = 0;
+
+	int bytePos = (x) + (y*(pitch/4));
+	red = (int)bytes[(bytePos*4)];
+	green = (int)bytes[(bytePos*4)+1];
+	blue = (int)bytes[(bytePos*4)+2];
+	alpha = (int)bytes[(bytePos*4)+3];
+	//cout << "pixel byte pos = " << (bytePos) << endl;
+	//for (int i = 0; i < 65*4; i+=4)
+	//{
+	//	cout << i/4 << ": " << (int *)bytes[i] << " " << (int *)bytes[i+1] << " " << (int *)bytes[i+2] << " " << (int *)bytes[i+3] << endl;
+	//}
+
+	SDL_UnlockTexture(tex);
+
+	return color(blue,green,red);
+}
+
 void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 	//Setup the destination rectangle to be at the position we want
 	SDL_Rect dst;
@@ -695,6 +784,7 @@ string gramsToReadable(double grams, bool showExact)
 //loads the fonts into ram and keeps so they can be referenced each time the drawText function needs them
 int loadFonts()
 {
+	cout << "poop" << endl;
 	for (int i = 0; i < 48; i++)
 	{
 		fonts.push_back(TTF_OpenFont("Sans.ttf", i*3));
@@ -799,6 +889,63 @@ bool isColliding2D(int posX, int posY, int sizeX, int sizeY, int mouseX, int mou
 	{
 		return false;
 	}
+}
+
+//converts a string to a number that can be used for a seed
+int numberFromString(string input)
+{
+	int num = 0;
+	for (int i = 0; i < input.length(); i++)
+	{
+		num =+ input.c_str()[i];
+	}
+
+	return num;
+}
+
+void writeElement(XMLElement *baseElement, string elementName, string elementValue)
+{
+	XMLElement *newNode = baseElement->InsertNewChildElement(elementName.c_str());
+	newNode->SetText(elementValue.c_str());
+	baseElement->InsertEndChild(newNode);
+
+	return void();
+}
+
+void writeElement(XMLElement *baseElement, string elementName, int elementValue)
+{
+	XMLElement *newNode = baseElement->InsertNewChildElement(elementName.c_str());
+	newNode->SetText(elementValue);
+	baseElement->InsertEndChild(newNode);
+
+	return void();
+}
+
+void writeElement(XMLElement *baseElement, string elementName, bool elementValue)
+{
+	XMLElement *newNode = baseElement->InsertNewChildElement(elementName.c_str());
+	newNode->SetText(elementValue);
+	baseElement->InsertEndChild(newNode);
+
+	return void();
+}
+
+void writeElement(XMLElement *baseElement, string elementName, double elementValue)
+{
+	XMLElement *newNode = baseElement->InsertNewChildElement(elementName.c_str());
+	newNode->SetText(elementValue);
+	baseElement->InsertEndChild(newNode);
+
+	return void();
+}
+
+void writeElement(XMLElement *baseElement, string elementName, float elementValue)
+{
+	XMLElement *newNode = baseElement->InsertNewChildElement(elementName.c_str());
+	newNode->SetText(elementValue);
+	baseElement->InsertEndChild(newNode);
+
+	return void();
 }
 
 //void drawCrewIconLarge(vector<SDL_Texture*> crewLargeTextures, crewMember crewPerson, SDL_Renderer *ren, int x, int y)
