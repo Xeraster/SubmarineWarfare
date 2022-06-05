@@ -317,6 +317,14 @@ submarine :: submarine(vector<string> fileData)
 	//now, give the submarine the correct upgrade parts based on its information
 	applyCorrectParts();
 
+	//set all the world stuff to zero
+	worldPosX = 0;
+	worldPosY = 0;
+	worldPosZ = 0;
+	worldRotX = 0;
+	worldRotY = 0;
+	worldRotZ = 0;
+	m_periscopeHeight = 0;
 
 }
 
@@ -799,6 +807,17 @@ submarine& submarine :: operator=(submarine& other)
 		torpedoStorage->at(t) = other.torpedoStorage->at(t);
 	}
 
+	submarineMesh = other.submarineMesh;
+
+	//set all the world stuff to zero
+	worldPosX = other.worldPosX;
+	worldPosY = other.worldPosY;
+	worldPosZ = other.worldPosZ;
+	worldRotX = other.worldRotX;
+	worldRotY = other.worldRotY;
+	worldRotZ = other.worldRotZ;
+	m_periscopeHeight = other.m_periscopeHeight;
+
 	return *this;
 }
 
@@ -812,7 +831,7 @@ void submarine :: drawIconLarge(SDL_Renderer *ren, int posX, int posY)
 	renderTexture(largeIcon, ren, posX, posY);
 }
 
-int loadSubmarineFile(string filePath, SDL_Renderer *ren)
+int loadSubmarineFile(string filePath, SDL_Renderer *ren, SDL_Window *win)
 {
 	//load the contents of the provides file into ram
 	ifstream itemFile(filePath);
@@ -835,6 +854,7 @@ int loadSubmarineFile(string filePath, SDL_Renderer *ren)
 
 	//now load the menu textures
 	newSub.loadSubmarineIcons(ren, false);
+	newSub.loadSubmarineMesh(ren, win);
 
 	//textures are loaded and pointers are set. Put this into the registry
 	submarineRegistry->push_back(newSub);
@@ -867,6 +887,11 @@ int submarine :: loadSubmarineIcons(SDL_Renderer *ren, bool useCompressed)
 
 	return 0;
 
+}
+
+void submarine :: loadSubmarineMesh(SDL_Renderer *ren, SDL_Window *win)
+{
+	submarineMesh.LoadFromObjectFile(ren, win, "Mesh/Submarines/"+m_mesh_high, "Textures/Submarines/"+m_textureName+"/"+m_textureName+"_texture_1024.png", true);
 }
 
 bool submarine :: crewToRandomCompartment(crewMember *person)
@@ -1738,6 +1763,32 @@ void submarine :: putPartInSubmarine(upgradePart *part)
 	}
 }
 
+//called on every frame where the periscope needs to be going up or down. positive numbers = up. negative numbers = down
+void submarine :: periscopeRaise(double speed)
+{
+	if (m_periscopeHeight < 13.0f && speed > 0)
+	{
+		m_periscopeHeight += speed;
+	}
+
+	else if (m_periscopeHeight > 0.0f && speed < 0)
+	{
+		m_periscopeHeight += speed;
+	}
+
+	return void();
+}
+
+//called on every frame where the periscope need to rotate left or right. positive values for right, negative values for left
+void submarine :: periscopeRotate(double spdMult)
+{
+	m_periscopeRotation += spdMult;
+	if (m_periscopeRotation < 0) m_periscopeRotation = static_cast<int>((m_periscopeRotation + 360)) % 360;
+	else if (m_periscopeRotation > 360) m_periscopeRotation = static_cast<int>(m_periscopeRotation) % 360;
+
+	return void();
+}
+
 //returns a mostly unique id used for saving and loading based on the submarines's info
 //it's not impossible for 2 submarines to have the same id, just highly unlikely. In the future, the way this function works may change
 string submarine :: makeIdHashSalt()
@@ -1936,7 +1987,7 @@ void submarine :: setupDetailsStrings(submarine *compareSub)
 	}
 }
 
-int loadAllSubmarines(SDL_Renderer *ren)
+int loadAllSubmarines(SDL_Renderer *ren, SDL_Window *win)
 {
 	//make a list of all present submarine file paths
 	string submarinePath = "Data/submarines";
@@ -1951,7 +2002,7 @@ int loadAllSubmarines(SDL_Renderer *ren)
 	//for each encountered submarine file, load them
 	for (int i = 0; i < filePaths.size(); i++)
 	{
-		loadSubmarineFile(filePaths.at(i), ren);
+		loadSubmarineFile(filePaths.at(i), ren, win);
 	}
 
 	return 0;

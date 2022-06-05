@@ -345,7 +345,7 @@ void loadMenuTextures(SDL_Renderer *ren, int menuQuality)
 
 }
 
-void drawMainMenu(SDL_Renderer *ren, int screenSizeX, int screenSizeY)
+void drawMainMenu(SDL_Renderer *ren, int screenSizeX, int screenSizeY, SDL_Window *win)
 {	
 	color menuBackgroundColor(0,0,0,100);
 	color white(255,255,255,255);
@@ -478,10 +478,17 @@ void drawMainMenu(SDL_Renderer *ren, int screenSizeX, int screenSizeY)
 			//im recycling the start new campaign start button because it's already the correct size and in the correct screen scaled position
 			if (startNewCampaign.draw(ren, mouseX, mouseY, lastMouse))
 			{
+				theWorld = worldInfo(playerCampaignInfo, "heightmap4096", ren, win);
 				//preliminaryMissionStartScreen = false;
 				enable3D = true;
 				ingameMenus = true;
 				campaignBaseScreen = false;
+
+				theWorld.generateNearTerrain(0, 0, 20);
+				theWorld.generateNearOcean(0, 0, 1);
+
+				//spawn a ship jhust for kix
+				theWorld.spawnShip("AFS1", 50, 10, 90);
 			}
 
 			drawPeliminaryMissionStartScreen(ren, mouseX, mouseY, lastMouse);
@@ -1163,7 +1170,7 @@ void beIngame(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
 	}
 	else if (mapView)
 	{
-
+		mapScreen(ren, mouseX, mouseY, lastMouse);
 	}
 	else if (inGameTorpedoManagement)
 	{
@@ -1276,11 +1283,108 @@ void beIngame(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
 
 void periscopeScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
 {
+	//draw periscope heading lines
+	//do this behind the periscop player for reasons
+	int middle = ((gscreenx - gscreeny)/2)+(gscreeny/2); //get where the "middle" of the heading indicator should be
+	double curPeriRot = playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation;
+
+	//convert periscope rotation into a +/- 180 degree format for easier calculating
+	if (curPeriRot > 180) curPeriRot = (curPeriRot - 360);
+
+	//we don't have to this for for the full 360 in each direction but we do have to do it for a little more than 180 in each direction for it to look right
+	for (int i = -210; i < 210; i++)
+	{
+
+		//tick marks are higher if heading tickmark is a multiple of 10
+		int heightMult = 55;
+		if (i % 10 == 0)
+		{
+			heightMult = 70;
+
+			//convert the value of i to be suitable to be used as a marking for the 10s place on the periscope heading ticker
+			string convHdgValue;
+			if (i < 0) convHdgValue = to_string(i*-1);
+			else convHdgValue = to_string(360-i);
+			if (convHdgValue == "360") convHdgValue = "0";
+
+			//draw the heading text
+			drawText(ren, 8, color(0,0,0), convHdgValue, (middle - ((curPeriRot*5) + i*5))-(getTextXSize(8, convHdgValue.size())/2), 80);
+		}
+
+		//draw the heading tick mark line itself
+		drawLine(ren, color(0,0,0,255), middle - ((curPeriRot*5) + i*5), 50 * gscreeny / 600, middle - ((curPeriRot*5) + i*5), heightMult * gscreeny / 600);
+	}
+
 	//draw periscope lense and pad sides with black
 	renderTextureEx(periscope_viewport, ren, (gscreenx - gscreeny)/2, 0, gscreeny, gscreeny, 0);
 	drawRectFilled(ren, color(0,0,0), 0, 0, (gscreenx - gscreeny)/2, gscreeny);
 	drawRectFilled(ren, color(0,0,0), ((gscreenx - gscreeny)/2)+gscreeny, 0, (gscreenx - gscreeny)/2, gscreeny);
 
 	//draw periscope height indicator
+	periscopeHeight.setValue(static_cast<int>(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight));
 	periscopeHeight.draw(ren);
+
+	if (lastKey[SDL_SCANCODE_PAGEDOWN])
+	{
+		cout << "pagedown asserted" << endl;
+		playerCampaignInfo->playerEquippedSubmarine()->periscopeRaise(-0.1f);
+		cout << "periscope height = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight << endl;
+		game3dRenderer.setCamPosY(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight);
+	}
+
+	if (lastKey[SDL_SCANCODE_PAGEUP])
+	{
+		cout << "pageup asserted" << endl;
+		playerCampaignInfo->playerEquippedSubmarine()->periscopeRaise(0.1f);
+		cout << "periscope height = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight << endl;
+		game3dRenderer.setCamPosY(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight);
+	}
+
+	if (lastKey[SDL_SCANCODE_A] || lastKey[SDL_SCANCODE_LEFT])
+	{
+		playerCampaignInfo->playerEquippedSubmarine()->periscopeRotate(-1.0f);
+		cout << "periscope rot = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation << endl;
+		game3dRenderer.setCamRot(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation);
+	}
+
+	if (lastKey[SDL_SCANCODE_D] || lastKey[SDL_SCANCODE_RIGHT])
+	{
+		playerCampaignInfo->playerEquippedSubmarine()->periscopeRotate(1.0f);
+		cout << "periscope rot = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation << endl;
+		game3dRenderer.setCamRot(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation);
+	}
+}
+
+void mapScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
+{
+	if (wheelUp)
+	{
+		mapZoom += 0.1*mapZoom;
+		cout << "map zoom =" << mapZoom << endl;
+	}
+	else if (wheelDown)
+	{
+		mapZoom -= 0.1*mapZoom;
+		cout << "map zoom =" << mapZoom << endl;
+	}
+
+	if (mapDragging)
+	{
+		mapViewX += (mouseX - mouseBeforeX)/mapZoom;
+		mapViewY += (mouseY - mouseBeforeY)/mapZoom;
+		cout << "now map pos = " << mapViewX << "," << mapViewY << endl;
+	}
+
+	if (lastMouse == SDL_BUTTON(SDL_BUTTON_LEFT))
+	{
+		mapDragging = true;
+		mouseBeforeX = mouseX;
+		mouseBeforeY = mouseY;
+	}
+	else
+	{
+		mapDragging = false;
+	}
+
+	theWorld.drawMap(ren, mapZoom, mapViewX, mapViewY);
 }

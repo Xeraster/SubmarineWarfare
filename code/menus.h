@@ -191,8 +191,15 @@ button test3dButtonF1 = button("reverse dir", color(255,0,255), 600, 100, 12);
 button test3dButtonF2 = button("change offsets", color(255,0,255), 600, 150, 12);
 button test3dButtonF3 = button("shift matrices", color(255,0,255), 600, 200, 12);
 extern olcEngine3D game3dRenderer;
+extern worldInfo theWorld;
+double mapZoom = 1.0;
+double mapViewX = 0;
+double mapViewY = 0;
+double mouseBeforeX = 0;
+double mouseBeforeY = 0;
+bool mapDragging = false;
 
-progressBar periscopeHeight(0, 0, 5, 50, color(255,150,0), 15, false);
+progressBar periscopeHeight(0, 0, 50, 50, color(255,150,0), 15, true);
 
 //the load game screen objects
 verticalScrollView gameLoadingScrollview(800, 600, 250, 100, 15);
@@ -222,6 +229,8 @@ void loadIngameSpecificTextures(SDL_Renderer *ren);
 void beIngame(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse);
 
 void periscopeScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse);
+
+void mapScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse);
 
 #include "menus.hpp"
 

@@ -3,9 +3,9 @@ desc=a nuclear attack submarine
 #texture folder name
 texture=LosAngeles
 #low quality mesh
-mesh_low=losangeles.obj
+mesh_low=688.obj
 #high quality mesh
-mesh_high=losangelses.obj
+mesh_high=688.obj
 #top speed surfaced (knots)
 surf_speed=33
 #top speed submerged (knots)

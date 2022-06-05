@@ -113,12 +113,19 @@ void renderTextureEx(SDL_Texture *tex, SDL_Renderer *ren, int posX, int posY, in
 
 void drawLine(SDL_Renderer *ren, color whatColor, int x1, int y1, int x2, int y2)
 {
-	SDL_SetRenderDrawColor(ren, whatColor.getRed(), whatColor.getGreen(), whatColor.getBlue(), SDL_ALPHA_OPAQUE);
+	SDL_SetRenderDrawColor(ren, whatColor.getRed(), whatColor.getGreen(), whatColor.getBlue(), whatColor.getAlpha());
 	SDL_RenderDrawLine(ren, x1, y1, x2, y2);
 	SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
 }
 
 void drawPixel(SDL_Renderer *ren, int x, int y, color whatColor)
+{
+	SDL_SetRenderDrawColor(ren, whatColor.getRed(), whatColor.getGreen(), whatColor.getBlue(), whatColor.getAlpha());
+	SDL_RenderDrawPoint(ren, x, y);
+	SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
+}
+
+void drawPixel(SDL_Renderer *ren, int x, int y, color24 whatColor)
 {
 	SDL_SetRenderDrawColor(ren, whatColor.getRed(), whatColor.getGreen(), whatColor.getBlue(), SDL_ALPHA_OPAQUE);
 	SDL_RenderDrawPoint(ren, x, y);

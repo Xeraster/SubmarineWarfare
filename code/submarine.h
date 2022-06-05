@@ -114,6 +114,8 @@ public:
 	//loads the standard 3-set of submarine icons. Loaded upon game start
 	int loadSubmarineIcons(SDL_Renderer *ren, bool useCompressed = false);
 
+	void loadSubmarineMesh(SDL_Renderer *ren, SDL_Window *win);
+
 	//loads each of the submarine's compartment textures. Only done when the player "selects" a submarine.
 	//This way, having a modlist of 200+ modded submarines won't lag the game out from the stupid search algorithms and/or a massive ram hit
 	int loadExtraSubmarineIcons(SDL_Renderer *ren);
@@ -188,6 +190,38 @@ public:
 	bool alreadyHasPart(upgradePart *part);
 
 	void putPartInSubmarine(upgradePart *part);
+
+	/*
+	=========================================================
+	stuff having to do with being in-world
+	=======================================================
+	*/
+
+	double worldPosX;
+	double worldPosY;
+	double worldPosZ;
+
+	double worldRotX;
+	double worldRotY;
+	double worldRotZ;
+
+	double m_periscopeHeight; 		//units are in meters
+	double m_periscopeRotation; 	//a value between 0-360
+
+	//i've decided each object will have its own mesh information stored in ram instead of just a pointer to a common one. This may make implementing new features easier in the future at possible cost loading time and ram usage
+	mesh submarineMesh;
+
+	//called on every frame where the periscope needs to be going up or down. positive numbers = up. negative numbers = down
+	void periscopeRaise(double speed);
+
+	//called on every frame where the periscope need to rotate left or right. positive values for right, negative values for left
+	void periscopeRotate(double spdMult);
+
+	/*
+	=========================================================
+	stuff having to do with loading and/or saving
+	=======================================================
+	*/
 
 	//returns a mostly unique id used for saving and loading based on the submarines's info
 	//it's not impossible for 2 submarines to have the same id, just highly unlikely. In the future, the way this function works may change
@@ -332,9 +366,9 @@ vector<textureEntry*> *submarineSprites = new vector<textureEntry*>;
 
 vector<textureEntry*> *extraSubmarineSprites = new vector<textureEntry*>;
 
-int loadSubmarineFile(string filePath, SDL_Renderer *ren);
+int loadSubmarineFile(string filePath, SDL_Renderer *ren, SDL_Window *win);
 
-int loadAllSubmarines(SDL_Renderer *ren);
+int loadAllSubmarines(SDL_Renderer *ren, SDL_Window *win);
 
 submarine* getSubmarineByName(string name);
 

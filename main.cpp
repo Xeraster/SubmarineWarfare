@@ -25,6 +25,10 @@ int offset1 = 1;
 int offset2 = 1;
 int shiftSlot3d = 0;
 
+const Uint8 *lastKey = SDL_GetKeyboardState(NULL);
+bool wheelUp = false;
+bool wheelDown = false;
+
 #include <type_traits>
 
 #include "color.h"
@@ -47,6 +51,7 @@ int shiftSlot3d = 0;
 #include "Qualifications.h"
 #include "code/awards.h"
 #include "crewMember.h"
+#include "code/ship.h"
 #include "code/submarineCompartment.h"
 #include "code/submarine.h"
 #include "code/campaign.h"
@@ -137,6 +142,8 @@ devConsole console;
 //int threadedSimpleStar(void* yeah);
 
 void helloWorld();
+
+worldInfo theWorld;
 
 int main()
 {	
@@ -297,7 +304,8 @@ int main()
 	//testThing = poop;
 	//cout << testThing << endl;
 	
-	loadAllSubmarines(ren);
+	loadAllSubmarines(ren, win);
+	loadAllShips(ren, win);
 	//loadSubmarineFile("Data/submarines/Foxtrot.sub");
 	//cout << "parent submarine= " << submarineRegistry->at(0).compartmentList.at(0).getParent()->name() << endl;
 	int texQX = 0;
@@ -341,6 +349,8 @@ int main()
 	doc.SaveFile("test.xml");
 
 	poopy = loadTextureToRam_TA("stripes.bmp", ren, win);
+	//theWorld = worldInfo(playerCampaignInfo, "heightmap4096", ren, win);
+	loadMapAssets(ren, win);
 	//cout << "loaded texture" << endl;
 	//color poopyColor = pixelAtPos(poopy, ren, win, 0, 0);
 	//color poopyColor2 = pixelAtPos(poopy, ren, win, 2, 4);
@@ -381,11 +391,20 @@ int main()
 		lastCharTyped = "";
 		backspaceAsserted = false;
 		enterAsserted = false;
+		wheelDown = false;
+		wheelUp = false;
 		while (SDL_PollEvent(&testEvent) == 1)
 		{
 			if (testEvent.type == SDL_TEXTINPUT)
        	 	{
        	 		lastCharTyped = testEvent.text.text;
+       	 	}
+
+       	 	if (testEvent.type == SDL_MOUSEWHEEL)
+       	 	{
+       	 		//cout << "SDL mouse wheel event" << endl;
+       	 		if (testEvent.wheel.y > 0) wheelUp = true;
+       	 		else wheelDown = true;
        	 	}
 
 			if (testEvent.window.event == SDL_WINDOWEVENT_CLOSE)
@@ -395,7 +414,8 @@ int main()
 
 		}
 
-		const Uint8 *lastKey = SDL_GetKeyboardState(NULL);
+		//const Uint8 *lastKey = SDL_GetKeyboardState(NULL);
+		lastKey = SDL_GetKeyboardState(NULL);
     	//if (m_timeTillNextKey <= 0)
     	//{
     		if (lastKey[SDL_SCANCODE_BACKSPACE]) 
@@ -419,9 +439,11 @@ int main()
 
 	//delete [] nameRandomizerObject;
 	//delete [] crewNameGeneratorObject;
+	deleteMapAssets();
 	deleteFonts();
 	delete [] skillStringArray;
 	//delete [] game3dRenderer.meshesToRender;
+	SDL_DestroyTexture(theWorld.getMapTex());
 	SDL_DestroyRenderer(ren);
 	SDL_DestroyWindow(win);
 	SDL_DestroyTexture(tex);
@@ -494,8 +516,15 @@ void update(SDL_Renderer *ren, SDL_Window *win)
 		//color red(255,0,0);
 		//drawRectFilled(ren, red, 0, 0, 800, 600);
 		//drawLine(ren, red, 0, 0, 400, 500);
-		if (enable3D) game3dRenderer.GameThread();
-		if (mainMenu) drawMainMenu(ren, screenSizeX(win), screenSizeY(win));
+		if (enable3D)
+		{
+			if (theWorld.init())
+			{
+				theWorld.prepareToRenderFrame(ren, win, &game3dRenderer);
+			}
+			game3dRenderer.GameThread();
+		}
+		if (mainMenu) drawMainMenu(ren, screenSizeX(win), screenSizeY(win), win);
 
 		//manage the console
 		console.draw(ren, mouseX, mouseY, lastMouse, screenSizeX(win), screenSizeY(win));

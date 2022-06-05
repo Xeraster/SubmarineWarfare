@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Ship>
+	<className>PoopBarge</className>
+	<classString>poop barge</classString>
+	<description>a barge that sails around carrying a pile of poop for some reason.</description>
+	<texture>PoopBarge</texture>
+	<mesh>poopbarge.obj</mesh>
+
+	<!-- 0= junk. 1 = ww2 more or less. 2 = cold war. 3 = modern. 4 = advanced futuristic -->
+	<tier>0</tier>
+
+	<!-- 0 = merchant. 1 = warship. 2 = natural -->
+	<type>0</type>
+	<top_speed>11.5</top_speed>
+	<acceleration>0.3</acceleration>
+	<turn_rate>0.5</turn_rate>
+	<range>2000</range>
+	<has_hydrophones>false</has_hydrophones>
+	<has_sonar>false</has_sonar>
+	<has_radar>false</has_radar>
+	<length>20.3</length>
+	<beam>9</beam>
+	<draft>3.3</draft>
+
+	<!-- how many floodable compartments the ship is split up into -->
+	<flood_compartments>1</flood_compartments>
+
+	<!-- where does the ship prefer to pathfind? 0 = coastal. 1 = deep ocean. 2 = no preference -->
+	<pathfinding>0</pathfinding>
+	<tonnage>20</tonnage>
+
+</Ship>

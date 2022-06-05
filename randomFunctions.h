@@ -51,6 +51,9 @@ void renderTextureEx(SDL_Texture *tex, SDL_Renderer *ren, int posX, int posY, in
 //orders you a pizza. not really it draws a pixel
 void drawPixel(SDL_Renderer *ren, int x, int y, color whatColor);
 
+//24 bit unsigned 8 bit int color version of draw pixel. Squeeze every last bit of performance out of the 3d renderer
+void drawPixel(SDL_Renderer *ren, int x, int y, color24 whatColor);
+
 //draws a line
 void drawLine(SDL_Renderer *ren, color whatColor, int x1, int y1, int x2, int y2);
 

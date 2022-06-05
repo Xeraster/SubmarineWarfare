@@ -3,9 +3,9 @@ desc=A popular low-cost design often used by smugglers, originally designed by t
 #texture folder name
 texture=AS-29
 #low quality mesh
-mesh_low=as29.obj
+mesh_low=mahecha.obj
 #high quality mesh
-mesh_high=as29.obj
+mesh_high=mahecha.obj
 #top speed surfaced (knots)
 surf_speed=11
 #top speed submerged (knots)

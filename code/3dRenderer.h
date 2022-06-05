@@ -356,10 +356,11 @@ struct triangle
 {
 	vec3d p[3];
 	vec2d t[3]; // added a texture coord per vertex
-	wchar_t sym;
-	short col;
+	//wchar_t sym;
+	//short col;
 
 	color triColor; //SDL compatible 32 bit color value as I am phasing out the 16 bit "short col" crap 
+	//color24 triColor; //SDL compatible 24 bit uint8 color
 
 	void print()
 	{
@@ -375,6 +376,33 @@ struct triangle
 		cout << endl;
 
 		return void();
+	}
+
+	triangle& operator=(const triangle& other)
+	{
+		//copy vec2d
+		for (int i = 0; i < 3; i++)
+		{
+			t[i].u = other.t[i].u;
+			t[i].v = other.t[i].v;
+			t[i].w = other.t[i].w;
+		}
+
+		//copy vec3d
+		for (int i = 0; i < 3; i++)
+		{
+			p[i].x = other.p[i].x;
+			p[i].y = other.p[i].y;
+			p[i].z = other.p[i].z;
+			p[i].w = other.p[i].w;
+		}
+
+		//copy the more simple stuff
+		//sym = other.sym;
+		//col = other.col;
+		triColor = other.triColor;
+
+		return *this;
 	}
 };
 
@@ -564,7 +592,8 @@ struct mesh
 			newPixel.setRed((int)bytes[byteNum+2]);
 			newPixel.setGreen((int)bytes[byteNum+1]);
 			newPixel.setBlue((int)bytes[byteNum]);
-			newPixel.setAlpha((int)bytes[byteNum+3]);
+			//newPixel.setAlpha((int)bytes[byteNum+3]);
+			newPixel.setAlpha((int)255);
 			rawTexture.push_back(newPixel);
 		}
 
@@ -576,9 +605,10 @@ struct mesh
 
 	color texPixelAt(int x, int y)
 	{
-		int num = x + (y*texSizeX);
+		//int num = x + (y*texSizeX);
+		int num = (texSizeX - x) + (y*texSizeX); 		//for some reason it renders the texture flipped horizontally unless you do this (instead of the line above it)
 		if (num > rawTexture.size()-1) num = num % rawTexture.size();
-		return rawTexture.at(rawTexture.size() - num - 1); 	//for some reason it renders the textures "backwards" unless you do this
+		return rawTexture.at(rawTexture.size() - num - 1); 	//for some reason it renders the textures "flipped vertically" unless you do this (instead of the line under it)
 		//return rawTexture.at(num);
 	}
 
@@ -594,6 +624,35 @@ struct mesh
 	void appendRasterInformation(vector<triangle> *vecTrianglesToRaster)
 	{
 		
+	}
+
+	mesh& operator=(const mesh& other)
+	{
+		//copy the tris data
+		for (int i = 0; i < other.tris.size(); i++)
+		{
+			tris.push_back(other.tris.at(i));
+		}
+
+		//copy the texture data
+		for (int i = 0; i < other.rawTexture.size(); i++)
+		{
+			rawTexture.push_back(other.rawTexture.at(i));
+		}
+
+		//copy all the easy non-vector variables
+		texSizeX = other.texSizeX;
+		texSizeY = other.texSizeY;
+
+		//world positioning information
+		posX = other.posX;
+		posY = other.posY;
+		posZ = other.posZ;
+		rotX = other.rotX;
+		rotY = other.rotY;
+		rotZ = other.rotZ;
+
+		return *this;
 	}
 };
 
@@ -698,15 +757,22 @@ public:
 		drawPixel(m_render, x, y, pixelColor);
 	}
 
-	//doesn't get used anymore
-	void Fill(int x1, int y1, int x2, int y2, wchar_t c = PIXEL_SOLID, short col = 0x000F)
+	//color24 version
+	void Draw(int x, int y, color24 pixelColor)
 	{
-		Clip(x1, y1);
-		Clip(x2, y2);
-		for (int x = x1; x < x2; x++)
-			for (int y = y1; y < y2; y++)
-				Draw(x, y, c, col);
+		drawPixel(m_render, x, y, pixelColor);
 	}
+
+
+	//doesn't get used anymore
+	//void Fill(int x1, int y1, int x2, int y2, wchar_t c = PIXEL_SOLID, short col = 0x000F)
+	//{
+	//	Clip(x1, y1);
+	//	Clip(x2, y2);
+	//	for (int x = x1; x < x2; x++)
+	//		for (int y = y1; y < y2; y++)
+	//			Draw(x, y, c, col);
+	//}
 
 	void drawSkyBackground(int x1, int y1, int x2, int y2, int numSteps = 10)
 	{
@@ -733,17 +799,17 @@ public:
 	}
 
 	//doesn't get used anymore
-	void DrawString(int x, int y, std::wstring c, short col = 0x000F)
+	/*void DrawString(int x, int y, std::wstring c, short col = 0x000F)
 	{
 		for (size_t i = 0; i < c.size(); i++)
 		{
 			m_bufScreen[m_nCurrentBuffer][y * m_nScreenWidth + x + i].glyph = c[i];
 			m_bufScreen[m_nCurrentBuffer][y * m_nScreenWidth + x + i].colour = col;
 		}
-	}
+	}*/
 
 	//doesn't get used anymore
-	void DrawStringAlpha(int x, int y, std::wstring c, short col = 0x000F)
+	/*void DrawStringAlpha(int x, int y, std::wstring c, short col = 0x000F)
 	{
 		for (size_t i = 0; i < c.size(); i++)
 		{
@@ -753,7 +819,7 @@ public:
 				m_bufScreen[m_nCurrentBuffer][y * m_nScreenWidth + x + i].colour = col;
 			}
 		}
-	}
+	}*/
 
 	//i'm fairly certain this doesn't get used anymore
 	void Clip(int &x, int &y)
@@ -967,6 +1033,7 @@ public:
 	}
 
 public:
+	mesh ocean; 		//what happens if you render a bug huge plane? Only one way to find out
 	//auto tp1 = std::chrono::system_clock::now();
 	//auto tp2 = std::chrono::system_clock::now();
 
@@ -1409,6 +1476,14 @@ public:
 
 	vector<mesh*> meshesToRender;
 
+	//functions meant to be accessed from outside the 3d renderer class
+	//this was originally written to "contain" every aspect of a program. Now, it is meant to serve the purpose of 3d rendering as part of a larger program and is no longer the "master" of all the stuff happening
+	void setCamPosX(double pos) { vCamera.x = pos; }
+	void setCamPosY(double pos) { vCamera.y = pos; }
+	void setCamPosZ(double pos) { vCamera.z = pos; }
+
+	void setCamRot(double rot) { fYaw = rot * 2 * 3.14159 / 360.0f ; }
+
 protected:
 	int Error(const wchar_t *msg)
 	{
@@ -1451,7 +1526,7 @@ protected:
 	{
 		auto SWAP = [](int &x, int &y) { int t = x; x = y; y = t; };
 		//auto drawline = [&](int sx, int ex, int ny) { for (int i = sx; i <= ex; i++) Draw(i, ny, c, col); };
-		auto drawline = [&](int sx, int ex, int ny) { for (int i = sx; i <= ex; i++) Draw(i, ny, col); };
+		//auto drawline = [&](int sx, int ex, int ny) { for (int i = sx; i <= ex; i++) Draw(i, ny, col); };
 
 		int t1x, t2x, y, minx, maxx, t1xp, t2xp;
 		bool changed1 = false;
@@ -1518,7 +1593,8 @@ protected:
 		next2:
 			if (minx > t1x) minx = t1x; if (minx > t2x) minx = t2x;
 			if (maxx < t1x) maxx = t1x; if (maxx < t2x) maxx = t2x;
-			drawline(minx, maxx, y);    // Draw line from min to max points found on the y
+			//drawline(minx, maxx, y);    // Draw line from min to max points found on the y
+			drawLine(m_render, col, minx, y, maxx, y); //use stuff closer to naitive sdl draw calls for better performance
 										 // Now increase y
 			if (!changed1) t1x += signx1;
 			t1x += t1xp;
@@ -1575,7 +1651,8 @@ protected:
 
 			if (minx > t1x) minx = t1x; if (minx > t2x) minx = t2x;
 			if (maxx < t1x) maxx = t1x; if (maxx < t2x) maxx = t2x;
-			drawline(minx, maxx, y);
+			//drawline(minx, maxx, y);
+			drawLine(m_render, col, minx, y, maxx, y); //use stuff closer to naitive sdl draw calls for better performance
 			if (!changed1) t1x += signx1;
 			t1x += t1xp;
 			if (!changed2) t2x += signx2;
@@ -1872,8 +1949,8 @@ private:
 			// the plane, the triangle simply becomes a smaller triangle
 
 			// Copy appearance info to new triangle
-			out_tri1.col =  in_tri.col;
-			out_tri1.sym = in_tri.sym;
+			//out_tri1.col =  in_tri.col;
+			//out_tri1.sym = in_tri.sym;
 			out_tri1.triColor = in_tri.triColor; //remember to copy the 32 bit color information or else textures won't display correctly when a triangle is clipped (i.e. when a mesh touches or goes over the screen edge)
 
 			// The inside point is valid, so keep that...
@@ -1903,12 +1980,12 @@ private:
 			// represent a quad with two new triangles
 
 			// Copy appearance info to new triangles
-			out_tri1.col =  in_tri.col;
-			out_tri1.sym = in_tri.sym;
+			//out_tri1.col =  in_tri.col;
+			//out_tri1.sym = in_tri.sym;
 			out_tri1.triColor = in_tri.triColor; //remember to copy the 32 bit color information or else textures won't display correctly when a triangle is clipped (i.e. when a mesh touches or goes over the screen edge)
 
-			out_tri2.col =  in_tri.col;
-			out_tri2.sym = in_tri.sym;
+			//out_tri2.col =  in_tri.col;
+			//out_tri2.sym = in_tri.sym;
 			out_tri2.triColor = in_tri.triColor;
 
 			// The first triangle consists of the two inside points and a new
@@ -1981,10 +2058,11 @@ private:
 	//like the CHAR_INFO GetColor except it returns a 32 bit color value
 	color GetColor32(float lum)
 	{
-		int pixel_bw = (int)(255.0f*lum);
+		Uint8 pixel_bw = (Uint8)(255.0f*lum);
 		//cout << "pixel_bw = " << pixel_bw << endl;
-		color luminalColor(pixel_bw, pixel_bw, pixel_bw);
-		return luminalColor;
+		//color luminalColor(pixel_bw, pixel_bw, pixel_bw);
+		//return luminalColor;
+		return color(pixel_bw, pixel_bw, pixel_bw);
 	}
 
 	float *pDepthBuffer = nullptr;
@@ -2032,17 +2110,20 @@ public:
 		};*/
 		//meshCube.LoadFromObjectFile(m_render, m_window, "bouy.obj","dotgrid.bmp",true);
 		//meshCube.LoadFromObjectFile(m_render, m_window, "Mesh/Misc/Traffic_Cone/Traffic_Cone.obj","Mesh/Misc/Traffic_Cone/Traffic_Cone.bmp",true);
-		traffic_cone.LoadFromObjectFile(m_render, m_window, "Mesh/Misc/Traffic_Cone/Traffic_Cone.obj","Mesh/Misc/Traffic_Cone/Traffic_Cone.bmp",true);
+		//traffic_cone.LoadFromObjectFile(m_render, m_window, "Mesh/Misc/Traffic_Cone/Traffic_Cone.obj","Mesh/Misc/Traffic_Cone/Traffic_Cone.bmp",true);
 		//bouy.LoadFromObjectFile(m_render, m_window, "Mesh/Misc/Bouy/bouy.obj","Mesh/Misc/Bouy/dotgrid.bmp",true);
 		//bouy.LoadFromObjectFile(m_render, m_window, "Mesh/Ordinance/Torpedo/torpedo.obj","Mesh/Ordinance/Torpedo/torpedo_lowres.bmp",true);
-		bouy.LoadFromObjectFile(m_render, m_window, "Mesh/Submarines/mahecha.obj","Mesh/Ordinance/Torpedo/mahecha_texture_128.png",true);
+		//bouy.LoadFromObjectFile(m_render, m_window, "Mesh/Submarines/mahecha.obj","Mesh/Ordinance/Torpedo/mahecha_texture_128.png",true);
+		//bouy.LoadFromObjectFile(m_render, m_window, "Mesh/Submarines/type21.obj","Textures/Submarines/Type21/type21_texture_1024.png",true);
+		//bouy.LoadFromObjectFile(m_render, m_window, "Mesh/Ships/poopbarge.obj","Textures/Ships/PoopBarge/PoopBarge_texture_1024.png",true);
 
 
 		//meshesToRender = new vector<mesh*>();
 		//meshesToRender.push_back(&meshCube);
-		meshesToRender.push_back(&traffic_cone);
-		meshesToRender.push_back(&bouy);
+		//meshesToRender.push_back(&traffic_cone);
+		//meshesToRender.push_back(&bouy);
 		bouy.posZ = 20;
+
 
 		//meshCube.print();
 
@@ -2057,6 +2138,7 @@ public:
 
 	void appendRasterInformation(vector<triangle> *vecTrianglesToRaster, mesh *meshToProcess, mat4x4 matView, mat4x4 matWorld)
 	{
+		//int totalClipped = 0;
 		for (auto tri : meshToProcess->tris)
 		//for (auto tri : meshCube.tris)
 		{
@@ -2097,19 +2179,19 @@ public:
 				float dp = max(0.1f, Vector_DotProduct(light_direction, normal));
 
 				// Choose console colours as required (much easier with RGB)
-				CHAR_INFO c = GetColour(dp);
+				//CHAR_INFO c = GetColour(dp);
 				//triTransformed.col = c.Attributes;
 				//triTransformed.sym = c.Char.UnicodeChar;
-				triTransformed.sym = c.glyph;
-				triTransformed.col = c.colour;
+				//triTransformed.sym = c.glyph;
+				//triTransformed.col = c.colour;
 				triTransformed.triColor = GetColor32(dp);
 
 				// Convert World Space --> View Space
 				triViewed.p[0] = Matrix_MultiplyVector(matView, triTransformed.p[0]);
 				triViewed.p[1] = Matrix_MultiplyVector(matView, triTransformed.p[1]);
 				triViewed.p[2] = Matrix_MultiplyVector(matView, triTransformed.p[2]);
-				triViewed.sym = triTransformed.sym;
-				triViewed.col = triTransformed.col;
+				//triViewed.sym = triTransformed.sym;
+				//triViewed.col = triTransformed.col;
 				triViewed.triColor = triTransformed.triColor; //remember to copy the 32 bit color over to the viewed triangle
 				triViewed.t[0] = triTransformed.t[0];
 				triViewed.t[1] = triTransformed.t[1];
@@ -2120,6 +2202,7 @@ public:
 				int nClippedTriangles = 0;
 				triangle clipped[2];
 				nClippedTriangles = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.1f }, { 0.0f, 0.0f, 1.0f }, triViewed, clipped[0], clipped[1]);
+				//totalClipped+=nClippedTriangles;
 
 				// We may end up with multiple triangles form the clip, so project as
 				// required
@@ -2129,8 +2212,8 @@ public:
 					triProjected.p[0] = Matrix_MultiplyVector(matProj, clipped[n].p[0]);
 					triProjected.p[1] = Matrix_MultiplyVector(matProj, clipped[n].p[1]);
 					triProjected.p[2] = Matrix_MultiplyVector(matProj, clipped[n].p[2]);
-					triProjected.col = clipped[n].col;
-					triProjected.sym = clipped[n].sym;
+					//triProjected.col = clipped[n].col;
+					//triProjected.sym = clipped[n].sym;
 					triProjected.triColor = clipped[n].triColor;
 					triProjected.t[0] = clipped[n].t[0];
 					triProjected.t[1] = clipped[n].t[1];
@@ -2182,21 +2265,25 @@ public:
 				}			
 			}
 		}
+		//cout << "totalClipped = " << totalClipped << endl;
 	}
 
-	void rasterAllVectors(vector<triangle> vecTrianglesToRaster, mesh *meshToProcess)
+	void rasterAllVectors(vector<triangle> *vecTrianglesToRaster, mesh *meshToProcess)
 	{
 		// Loop through all transformed, viewed, projected, and sorted triangles
-		for (auto &triToRaster : vecTrianglesToRaster)
+		//for (auto &triToRaster : vecTrianglesToRaster)
+		for (int i = 0; i < vecTrianglesToRaster->size(); i++)
 		{
+			//triangle *triToRaster = &vecTrianglesToRaster->at(i);
 			// Clip triangles against all four screen edges, this could yield
 			// a bunch of triangles, so create a queue that we traverse to 
 			//  ensure we only test new triangles generated against planes
 			triangle clipped[2];
-			list<triangle> listTriangles;
+			vector<triangle> listTriangles;
 
 			// Add initial triangle
-			listTriangles.push_back(triToRaster);
+			//listTriangles.push_back(triToRaster);
+			listTriangles.push_back(vecTrianglesToRaster->at(i));
 			int nNewTriangles = 1;
 
 			for (int p = 0; p < 4; p++)
@@ -2206,7 +2293,8 @@ public:
 				{
 					// Take triangle from front of queue
 					triangle test = listTriangles.front();
-					listTriangles.pop_front();
+					//listTriangles.pop_front();
+					listTriangles.erase(listTriangles.begin());
 					nNewTriangles--;
 
 					// Clip it against a plane. We only need to test each 
@@ -2218,8 +2306,10 @@ public:
 					{
 					case 0:	nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, test, clipped[0], clipped[1]); break;
 					case 1:	nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, (float)ScreenHeight() - 1, 0.0f }, { 0.0f, -1.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+					//case 1:	nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, gscreeny - 2, 0.0f }, { 0.0f, -1.0f, 0.0f }, test, clipped[0], clipped[1]); break;
 					case 2:	nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); break;
 					case 3:	nTrisToAdd = Triangle_ClipAgainstPlane({ (float)ScreenWidth() - 1, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+					//case 3:	nTrisToAdd = Triangle_ClipAgainstPlane({ gscreenx - 2, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); break;
 					}
 
 					// Clipping may yield a variable number of triangles, so
@@ -2235,11 +2325,37 @@ public:
 			// Draw the transformed, viewed, clipped, projected, sorted, clipped triangles
 			for (auto &t : listTriangles)
 			{
-				TexturedTriangle(t.p[0].x, t.p[0].y, t.t[0].u, t.t[0].v, t.t[0].w,
+				if (meshToProcess->texSizeX == 0 && meshToProcess->texSizeY == 0)
+				{
+					//if texSizeX and Y == 0, it's water. draw differently. I was unable to make TexturedTriangle fast enough to be used on everything
+					//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, color(0,155,255)*t.triColor);
+					//fill triangle is very fast but it doesn't use the depth buffer
+					//DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_WHITE);
+					//TexturedTriangle(t.p[0].x, t.p[0].y, t.t[0].u, t.t[0].v, t.t[0].w,
+					//t.p[1].x, t.p[1].y, t.t[1].u, t.t[1].v, t.t[1].w,
+					//t.p[2].x, t.p[2].y, t.t[2].u, t.t[2].v, t.t[2].w, meshToProcess, t.triColor);
+					ColoredTriangle(t.p[0].x, t.p[0].y, t.t[0].w,
+					t.p[1].x, t.p[1].y, t.t[1].w,
+					t.p[2].x, t.p[2].y, t.t[2].w, color(0,155,255)*t.triColor);
+				}
+				else if (meshToProcess->texSizeX == 1 && meshToProcess->texSizeY == 0)
+				{
+					//if texSizeX == 1 and Y == 0, it's terrain. draw differently. I was unable to make TexturedTriangle fast enough to be used on everything
+					
+					ColoredTriangle(t.p[0].x, t.p[0].y, t.t[0].w,
+					t.p[1].x, t.p[1].y, t.t[1].w,
+					t.p[2].x, t.p[2].y, t.t[2].w, color(10,150,0)*t.triColor);
+					//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, color(10,150,0)*t.triColor);
+					//DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_WHITE);
+				}
+				else
+				{
+					TexturedTriangle(t.p[0].x, t.p[0].y, t.t[0].u, t.t[0].v, t.t[0].w,
 					t.p[1].x, t.p[1].y, t.t[1].u, t.t[1].v, t.t[1].w,
 					t.p[2].x, t.p[2].y, t.t[2].u, t.t[2].v, t.t[2].w, meshToProcess, t.triColor);
+				}
 				
-				//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, t.sym, t.col);
+				//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, color(255,255,255));
 				//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, t.triColor);
 				//DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_WHITE);
 			}
@@ -2249,6 +2365,7 @@ public:
 	//made into non override
 	bool OnUserUpdate(float fElapsedTime)// override
 	{
+		/*
 		if (GetKey(VK_UP).bHeld)
 			vCamera.y += 8.0f * fElapsedTime;	// Travel Upwards
 
@@ -2279,7 +2396,7 @@ public:
 
 		if (GetKey(L'D').bHeld)
 			fYaw += 2.0f * fElapsedTime;
-
+		*/
 
 		
 
@@ -2314,7 +2431,7 @@ public:
 
 		drawGradient(m_render, 0, 0, ScreenWidth(), ScreenHeight(), 10);
 
-		fTheta += 1.0f * fElapsedTime; // Uncomment to spin me right round baby right round
+		//fTheta += 1.0f * fElapsedTime; // Uncomment to spin me right round baby right round
 
 		// Clear Depth Buffer
 		for (int i = 0; i < ScreenWidth()*ScreenHeight(); i++)
@@ -2326,9 +2443,12 @@ public:
 		{
 			// Set up "World Tranmsform" though not updating theta 
 			// makes this a bit redundant
-			mat4x4 matRotZ, matRotX;
-			matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
-			matRotX = Matrix_MakeRotationX(fTheta);
+			mat4x4 matRotZ, matRotX, matRotY;
+			//matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
+			//matRotX = Matrix_MakeRotationX(fTheta);
+			matRotZ = Matrix_MakeRotationZ(meshesToRender.at(e)->rotZ * 2 * 3.14159 / 360.0f);
+			matRotX = Matrix_MakeRotationX(meshesToRender.at(e)->rotX * 2 * 3.14159 / 360.0f);
+			matRotY = Matrix_MakeRotationY(meshesToRender.at(e)->rotY * 2 * 3.14159 / 360.0f);
 
 			mat4x4 matTrans;
 			matTrans = Matrix_MakeTranslation(meshesToRender.at(e)->posX, meshesToRender.at(e)->posY, meshesToRender.at(e)->posZ + 5);
@@ -2336,6 +2456,7 @@ public:
 			mat4x4 matWorld;
 			matWorld = Matrix_MakeIdentity();	// Form World Matrix
 			matWorld = Matrix_MultiplyMatrix(matRotZ, matRotX); // Transform by rotation
+			matWorld = Matrix_MultiplyMatrix(matWorld, matRotY); // Transform by Y rotation too (the original engine, wherever it came from, didn't already do this for some reason. So if there are rotation related bugs, check this first)
 			matWorld = Matrix_MultiplyMatrix(matWorld, matTrans); // Transform by translation
 
 			// Create "Point At" Matrix for camera
@@ -2354,7 +2475,7 @@ public:
 
 			appendRasterInformation(&vecTrianglesToRaster, meshesToRender.at(e), matView, matWorld);
 
-			rasterAllVectors(vecTrianglesToRaster, meshesToRender.at(e));
+			rasterAllVectors(&vecTrianglesToRaster, meshesToRender.at(e));
 
 			//meshesToRender.at(e)->appendRasterInformation(&vecTrianglesToRaster);
 		/*for (auto tri : meshesToRender.at(e)->tris)
@@ -2687,7 +2808,10 @@ public:
 						//Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
-						Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,color(255,255,255));
 						pDepthBuffer[i*ScreenWidth() + j] = tex_w;
 					}
 					t += tstep;
@@ -2760,7 +2884,10 @@ public:
 						//Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
-						Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,color(255,255,255));
 						pDepthBuffer[i*ScreenWidth() + j] = tex_w;
 					}
 					t += tstep;
@@ -2769,5 +2896,159 @@ public:
 		}		
 	}
 
+
+	void ColoredTriangle(	int x1, int y1, float w1,
+							int x2, int y2, float w2,
+							int x3, int y3, float w3, color luminance)
+	{
+		if (y2 < y1)
+		{
+			swap(y1, y2);
+			swap(x1, x2);
+			swap(w1, w2);
+		}
+
+		if (y3 < y1)
+		{
+			swap(y1, y3);
+			swap(x1, x3);
+			swap(w1, w3);
+		}
+
+		if (y3 < y2)
+		{
+			swap(y2, y3);
+			swap(x2, x3);
+			swap(w2, w3);
+		}
+
+		int dy1 = y2 - y1;
+		int dx1 = x2 - x1;
+		float dw1 = w2 - w1;
+
+		int dy2 = y3 - y1;
+		int dx2 = x3 - x1;
+		float dw2 = w3 - w1;
+
+		float tex_w;
+
+		float dax_step = 0, dbx_step = 0,
+			dw1_step=0, dw2_step=0;
+
+		if (dy1) dax_step = dx1 / (float)abs(dy1);
+		if (dy2) dbx_step = dx2 / (float)abs(dy2);
+
+		if (dy1) dw1_step = dw1 / (float)abs(dy1);
+
+		if (dy2) dw2_step = dw2 / (float)abs(dy2);
+
+		if (dy1)
+		{
+			for (int i = y1; i <= y2; i++)
+			{
+				int ax = x1 + (float)(i - y1) * dax_step;
+				int bx = x1 + (float)(i - y1) * dbx_step;
+
+				float tex_sw = w1 + (float)(i - y1) * dw1_step;
+				float tex_ew = w1 + (float)(i - y1) * dw2_step;
+
+				if (ax > bx)
+				{
+					swap(ax, bx);
+					swap(tex_sw, tex_ew);
+				}
+
+				tex_w = tex_sw;
+
+				float tstep = 1.0f / ((float)(bx - ax));
+				float t = 0.0f;
+
+				for (int j = ax; j < bx; j++)
+				{
+					tex_w = (1.0f - t) * tex_sw + t * tex_ew;
+					
+					//tex_u needs to be multiplied by texture width
+					//tex_u needs to be multiplied by texture height
+					//tex_u *= theMesh->texSizeX;
+					//tex_v *= theMesh->texSizeY;
+
+					if (tex_w > pDepthBuffer[i*ScreenWidth() + j])
+					{
+						//the texture/surface drawing line. Commenting out this, as well as the other line with this comment makes surfaces not be drawn
+						//Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
+						//Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						drawPixel(m_render, j, i, luminance);
+						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,color(255,255,255));
+						pDepthBuffer[i*ScreenWidth() + j] = tex_w;
+					}
+					t += tstep;
+				}
+
+			}
+		}
+
+		dy1 = y3 - y2;
+		dx1 = x3 - x2;
+		dw1 = w3 - w2;
+
+		if (dy1) dax_step = dx1 / (float)abs(dy1);
+		if (dy2) dbx_step = dx2 / (float)abs(dy2);
+
+		if (dy1) dw1_step = dw1 / (float)abs(dy1);
+
+		if (dy1)
+		{
+			for (int i = y2; i <= y3; i++)
+			{
+				int ax = x2 + (float)(i - y2) * dax_step;
+				int bx = x1 + (float)(i - y1) * dbx_step;
+
+				float tex_sw = w2 + (float)(i - y2) * dw1_step;
+
+				float tex_ew = w1 + (float)(i - y1) * dw2_step;
+
+				if (ax > bx)
+				{
+					swap(ax, bx);
+					swap(tex_sw, tex_ew);
+				}
+
+				tex_w = tex_sw;
+
+				float tstep = 1.0f / ((float)(bx - ax));
+				float t = 0.0f;
+
+				for (int j = ax; j < bx; j++)
+				{
+					tex_w = (1.0f - t) * tex_sw + t * tex_ew;
+					//cout << "tex_u = " << to_string(tex_u);
+					//cout << ", tex_v = " << to_string(tex_v);
+					//cout << ", tex_w = " << to_string(tex_w) << endl;
+
+					//tex_u needs to be multiplied by texture width
+					//tex_u needs to be multiplied by texture height
+					//tex_u *= theMesh->texSizeX;
+					//tex_v *= theMesh->texSizeY;
+
+					if (tex_w > pDepthBuffer[i*ScreenWidth() + j])
+					{
+						//the texture/surface drawing line. Commenting out this, as well as the other line with this comment makes surfaces not be drawn
+						//Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
+						//Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						drawPixel(m_render, j, i, luminance);
+						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,color(255,255,255));
+						pDepthBuffer[i*ScreenWidth() + j] = tex_w;
+					}
+					t += tstep;
+				}
+			}	
+		}	
+	}
 
 };
