@@ -31,6 +31,10 @@ bool wheelDown = false;
 
 #include <type_traits>
 
+#include "code/data types/half.hpp"
+using namespace half_float;
+using namespace half_float::literal;
+
 #include "color.h"
 #include "code/coloredString.h"
 #include "randomFunctions.h"
@@ -145,8 +149,12 @@ void helloWorld();
 
 worldInfo theWorld;
 
+SDL_Texture *LayerTexture;
+
 int main()
 {	
+	//setting this to anything other than 0 generates an error of "No hardware accelerated renderers available"
+	SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION, "0");
 	//coloredString test333;
 	//coloredString test555;
 	//test555 = "blah blah blah";
@@ -524,7 +532,45 @@ void update(SDL_Renderer *ren, SDL_Window *win)
 			}
 			game3dRenderer.GameThread();
 		}
+
+		/*//test to see if it's possible to directly write to sdl window as surface instead of using hte mormal sdl drawing functions
+		SDL_Surface *rawWindow = SDL_GetWindowSurface(win); 	//get the surface pointer
+		SDL_DestroyTexture(LayerTexture);
+
+		if (rawWindow != nullptr)
+		{
+			//lock the surface so that it can be modified
+			if (SDL_LockSurface(rawWindow) == 0)
+			{
+				//cout << "surface locked sucessfully" <<endl;
+			}
+			else
+			{
+				cout << "surface could not be locked" << endl;
+			}
+			//now, let's see if it's possible to actuall modify any pixels
+
+			byte * bytes = nullptr;
+			bytes = reinterpret_cast<byte*>(rawWindow->pixels);
+			SDL_Rect newRect;
+			newRect.x = 1;
+			newRect.y = 1;
+			newRect.h = 50;
+			newRect.w = 90;
+			SDL_FillRect(rawWindow, &newRect, 9999);
+
+			SDL_UnlockSurface(rawWindow);
+			LayerTexture=SDL_CreateTextureFromSurface(ren, rawWindow);
+			renderTexture(LayerTexture, ren, 0, 0);
+		}
+		else
+		{
+			cout << "error: window surface == nullptr. Your shit's fucked, yo" << endl;
+		}*/
+
 		if (mainMenu) drawMainMenu(ren, screenSizeX(win), screenSizeY(win), win);
+
+
 
 		//manage the console
 		console.draw(ren, mouseX, mouseY, lastMouse, screenSizeX(win), screenSizeY(win));

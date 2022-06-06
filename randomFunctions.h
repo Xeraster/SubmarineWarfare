@@ -176,6 +176,11 @@ bool isColliding2D(int posX, int posY, int sizeX, int sizeY, int mouseX, int mou
 //converts a string to a number that can be used for a seed
 int numberFromString(string input);
 
+Uint32 colorToUint32(color input)
+{
+	return (input.getBlue()) + (input.getGreen() << 8) + (input.getRed() << 16) + (255 << 24);
+}
+
 //======================================================
 //	save stuff
 //======================================================

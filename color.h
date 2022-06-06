@@ -24,6 +24,8 @@ public:
 
 	color operator*(const color& rhs); //multiplication operator for 3d shading purposes
 
+	color operator*(const float& rhs); //multiplication operator for 3d shading purposes
+
 	bool operator==(const color& rhs);
 
 protected:

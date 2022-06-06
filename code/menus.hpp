@@ -485,10 +485,10 @@ void drawMainMenu(SDL_Renderer *ren, int screenSizeX, int screenSizeY, SDL_Windo
 				campaignBaseScreen = false;
 
 				theWorld.generateNearTerrain(0, 0, 20);
-				theWorld.generateNearOcean(0, 0, 1);
+				theWorld.generateNearOcean(0, 0, 10);
 
 				//spawn a ship jhust for kix
-				theWorld.spawnShip("AFS1", 50, 10, 90);
+				theWorld.spawnShip("PoopBarge", 50, 10, 90);
 			}
 
 			drawPeliminaryMissionStartScreen(ren, mouseX, mouseY, lastMouse);

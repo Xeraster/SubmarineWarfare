@@ -57,6 +57,15 @@ color color::operator*(const color& rhs)
 	return *this;
 }
 
+color color :: operator*(const float& rhs)
+{
+	red = (float)red * rhs;
+	green = (float)green * rhs;
+	blue = (float)blue * rhs;
+
+	return *this;
+}
+
 bool color::operator==(const color& rhs)
 {
 	if (rhs.getBlue() == blue && rhs.getGreen() == green && rhs.getRed() == red && rhs.getAlpha() == alpha)

@@ -82,15 +82,6 @@ bool worldInfo :: drawMap(SDL_Renderer *ren, double zoom, double posX, double po
 		drawShipOnMap(ren, zoom, posX, posY, &m_ships.at(s));
 	}
 
-	for (int x = -200; x < 200; x++)
-	{
-		for (int y = -200; y < 200; y++)
-		{
-			int v = heightAtCoords(x, y);
-			drawPixel(ren, x + 200, y + 200, color(v,v,v));
-		}
-	}
-
 	return true;
 }
 
@@ -201,7 +192,6 @@ void worldInfo :: generateNearTerrain(double posX, double posY, int distance)
 		{
 			for (int y = posY - distance; y < posY + distance; y++)
 			{
-				cout << "processing vertex for heightmap pos " << x << ", " << y << endl;
 				triangle newTriangle;
 				newTriangle.p[0].x = (x)*mult;
 				newTriangle.p[0].z = (y+1)*mult;

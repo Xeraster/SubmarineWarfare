@@ -177,7 +177,6 @@ constexpr SDL_Color colour_lookup[] = {
 	SDL_Color{ 255,255,255,255 },// F
 };
 
-byte * bytes = nullptr;
 
 class olcSprite
 {
@@ -413,6 +412,8 @@ struct mesh
 	vector<color> rawTexture; //the texture info in it's rawest, purest, fastest, most uncompressed possible form
 	int texSizeX;
 	int texSizeY;
+	SDL_Texture *fileTex;
+	byte * bytes = nullptr;
 
 	//world positioning information
 	double posX = 0;
@@ -567,7 +568,8 @@ struct mesh
 		//3d obj file done loading. Now, load the texture
 //==========================================================
 		//temporarily load the texture as an SDL texture. This isn't fast enough, however
-		SDL_Texture *fileTex = loadTextureToRam_TA(textureName, ren, win);
+		//SDL_Texture *fileTex = loadTextureToRam_TA(textureName, ren, win);
+		fileTex = loadTextureToRam_TA(textureName, ren, win);
 		if (fileTex == nullptr)
 		{
 			cout << "could not find texture " << textureName << ". Loading fallback error texture instead" << endl;
@@ -612,6 +614,13 @@ struct mesh
 		//return rawTexture.at(num);
 	}
 
+	Uint32 rawPixelAt(int x, int y)
+	{
+		Uint32* Ubytes = (Uint32 *)bytes;
+		//return (Uint32)Ubytes[x + y*texSizeX];
+		return (Uint32)Ubytes[rawTexture.size() - ((texSizeX - x) + y*texSizeX) - 1];
+	}
+
 	void print()
 	{
 		for (int i = 0; i < tris.size(); i++)
@@ -652,6 +661,9 @@ struct mesh
 		rotY = other.rotY;
 		rotZ = other.rotZ;
 
+		fileTex = other.fileTex;
+		bytes = other.bytes;
+
 		return *this;
 	}
 };
@@ -675,6 +687,9 @@ protected:
 
 	CHAR_INFO *buff_old, *buff_new;
 public:
+	SDL_Surface *rawWindow;//get the surface pointer	
+	//vector<color24> screenBuffer;
+	//color24 ascreenBuffer[4096][4096];
 	olcEngine3D()
 	{
 		//==========================================================
@@ -763,6 +778,131 @@ public:
 		drawPixel(m_render, x, y, pixelColor);
 	}
 
+	void DrawToSurface(int x, int y, color pixelColor)
+	{
+		Uint32 * target_pixel = (Uint32 *)((Uint8 *)rawWindow->pixels + y * rawWindow->pitch + x * rawWindow->format->BytesPerPixel);
+		//cout << rawWindow->format->BytesPerPixel << endl;
+		//Uint32 * target_pixel = (Uint32 *)((Uint8 *)rawSurface->pixels);
+
+		//*(target_pixel+3)= 255;
+		//*(target_pixel+2)= pixelColor.getRed();
+		//*(target_pixel+1) = pixelColor.getGreen();
+		//byte colorInfo = (byte)0b00000000000000000000000000000000;
+		//*target_pixel = (pixelColor.getBlue() << 24) + (pixelColor.getGreen() << 16) + (pixelColor.getRed() << 8) + 255;
+		*target_pixel = (pixelColor.getBlue()) + (pixelColor.getGreen() << 8) + (pixelColor.getRed() << 16) + (255 << 24);
+		//*target_pixel = SDL_MapRGB(rawWindow->format, )
+
+		//*target_pixel = pixelColor.getBlue();
+		//target_pixel[3] = pixelColor.getAlpha();
+
+		//unsigned char* pixels = (unsigned char*)rawSurface -> pixels;
+		//cout << " size = " << sizeof(&target_pixel) << endl;
+		//pixels[4 * (y * rawWindow -> w + x) + 0] = 255; 
+		//pixels[4 * (y * rawWindow -> w + x) + 1] = 255; 
+		//pixels[4 * (y * rawWindow -> w + x) + 2] = 255; 
+		//pixels[4 * (y * rawWindow -> w + x) + 3] = 255; 
+
+		return void();
+
+	}
+
+	void DrawToSurface(int x, int y, Uint32 pixelColor)
+	{
+		Uint32 * target_pixel = (Uint32 *)((Uint8 *)rawWindow->pixels + y * rawWindow->pitch + x * rawWindow->format->BytesPerPixel);
+		//cout << rawWindow->format->BytesPerPixel << endl;
+		//Uint32 * target_pixel = (Uint32 *)((Uint8 *)rawSurface->pixels);
+
+		//*(target_pixel+3)= 255;
+		//*(target_pixel+2)= pixelColor.getRed();
+		//*(target_pixel+1) = pixelColor.getGreen();
+		//byte colorInfo = (byte)0b00000000000000000000000000000000;
+		//*target_pixel = (pixelColor.getBlue() << 24) + (pixelColor.getGreen() << 16) + (pixelColor.getRed() << 8) + 255;
+		*target_pixel = pixelColor;
+
+		//*target_pixel = pixelColor.getBlue();
+		//target_pixel[3] = pixelColor.getAlpha();
+
+		//unsigned char* pixels = (unsigned char*)rawSurface -> pixels;
+		//cout << " size = " << sizeof(&target_pixel) << endl;
+		//pixels[4 * (y * rawWindow -> w + x) + 0] = 255; 
+		//pixels[4 * (y * rawWindow -> w + x) + 1] = 255; 
+		//pixels[4 * (y * rawWindow -> w + x) + 2] = 255; 
+		//pixels[4 * (y * rawWindow -> w + x) + 3] = 255; 
+
+		return void();
+
+	}
+
+	void DrawToSurface(int x, int y, Uint32 pixelColor, float luminance)
+	{
+		//int num = (texSizeX - x) + (y*texSizeX); 		//for some reason it renders the texture flipped horizontally unless you do this (instead of the line above it)
+		//if (num > rawTexture.size()-1) num = num % rawTexture.size();
+		//return rawTexture.at(rawTexture.size() - num - 1); 
+
+		Uint32 * target_pixel = (Uint32 *)((Uint8 *)rawWindow->pixels + y * rawWindow->pitch + x * rawWindow->format->BytesPerPixel);
+		//cout << rawWindow->format->BytesPerPixel << endl;
+		//Uint32 * target_pixel = (Uint32 *)((Uint8 *)rawSurface->pixels);
+
+		//*(target_pixel+3)= 255;
+		//*(target_pixel+2)= pixelColor.getRed();
+		//*(target_pixel+1) = pixelColor.getGreen();
+		//byte colorInfo = (byte)0b00000000000000000000000000000000;
+		//*target_pixel = (pixelColor.getBlue() << 24) + (pixelColor.getGreen() << 16) + (pixelColor.getRed() << 8) + 255;
+		*target_pixel = pixelColor;
+		//cout << "value of target pixel to byte = " << (int)((Uint8)*(target_pixel+1)) << endl;
+		//Uint8 blue = (float)((Uint8)*(target_pixel+1))*luminance;
+		//Uint8 green = (float)((Uint8)*(target_pixel+1))*luminance;
+		//Uint8 red = (float)((Uint8)*(target_pixel+2))*luminance;
+		Uint8 blue;
+		Uint8 green;
+		Uint8 red;
+		SDL_GetRGB(*target_pixel,rawWindow->format, &red, &green, &blue);
+		*target_pixel = SDL_MapRGB(rawWindow->format, red*luminance, green*luminance, blue*luminance);
+
+
+		//cout << "color is " << (int)blue << ", " << (int)green << ", " << (int)red << endl;
+		//*target_pixel = (float)((Uint8)*target_pixel)*luminance + (green << 8) + (red << 16) + (255 << 24);
+		//cout << (int)green << endl;
+
+		//*target_pixel = pixelColor.getBlue();
+		//target_pixel[3] = pixelColor.getAlpha();
+
+		//unsigned char* pixels = (unsigned char*)rawSurface -> pixels;
+		//cout << " size = " << sizeof(&target_pixel) << endl;
+		//pixels[4 * (y * rawWindow -> w + x) + 0] = 255; 
+		//pixels[4 * (y * rawWindow -> w + x) + 1] = 255; 
+		//pixels[4 * (y * rawWindow -> w + x) + 2] = 255; 
+		//pixels[4 * (y * rawWindow -> w + x) + 3] = 255; 
+
+		return void();
+
+	}
+
+	void Draw3dSky(int x, int y, int step)
+	{
+		color skyBottom(53,214,237);
+		color skyTop(210,246,255);
+		int rSegmentSize = skyTop.getRed() - skyBottom.getRed();
+		int gSegmentSize = skyTop.getGreen() - skyBottom.getGreen();
+		int bSegmentSize = skyTop.getBlue() - skyBottom.getBlue();
+		int r = skyTop.getRed();
+		int g = skyTop.getGreen();
+		int b = skyTop.getBlue();
+		int yth = gscreeny/step;
+		for (int i = 0; i < step; i++)
+		{
+			//color stripColor(r - (i*(rSegmentSize/step)), g - (i*(gSegmentSize/step)), b - (i*(bSegmentSize/step)));
+			//drawRectFilled(ren, stripColor, x, yth*i, gscreenx, yth*(i+1));
+			Uint32 stripColor = (b - (i*(bSegmentSize/step))) + ((g - (i*(gSegmentSize/step))) << 8) + ((r - (i*(rSegmentSize/step))) << 16) + (255 << 24);
+			SDL_Rect fillRect;
+			fillRect.x = x;
+			fillRect.y = yth*i;
+			fillRect.w = gscreenx;
+			fillRect.h = yth*(i+1);
+			SDL_FillRect(rawWindow, &fillRect, stripColor);
+
+		}
+	}
 
 	//doesn't get used anymore
 	//void Fill(int x1, int y1, int x2, int y2, wchar_t c = PIXEL_SOLID, short col = 0x000F)
@@ -1036,6 +1176,9 @@ public:
 	mesh ocean; 		//what happens if you render a bug huge plane? Only one way to find out
 	//auto tp1 = std::chrono::system_clock::now();
 	//auto tp2 = std::chrono::system_clock::now();
+	SDL_Surface *rawSurface;
+	SDL_Texture *layerTexture;
+	byte * bytes = nullptr;
 
 	//---> This starts the game thread. This is the thing that I need to make run independently <--
 	void Start()
@@ -1064,6 +1207,9 @@ public:
 		//GameThread();
 		// Wait for thread to be exited
 		//t.join();
+
+		rawWindow = SDL_GetWindowSurface(m_window); 	//get the surface pointer							
+
 		OnUserCreate();
 	}
 
@@ -1151,12 +1297,12 @@ public:
 			//while (m_bAtomActive)
 			//{
 				// Handle Timing
-				tp2 = std::chrono::system_clock::now();
+				/*tp2 = std::chrono::system_clock::now();
 				std::chrono::duration<float> elapsedTime = tp2 - tp1;
 				tp1 = tp2;
-				float fElapsedTime = elapsedTime.count();
+				float fElapsedTime = elapsedTime.count();*/
 
-				SDL_Event e;
+				/*SDL_Event e;
 				while (SDL_PollEvent(&e))
 				{
 					switch (e.type)
@@ -1279,12 +1425,44 @@ public:
 					}
 
 					m_mouseOldState[m] = m_mouseNewState[m];
-				}
+				}*/
 
 	// Handle Frame Update
 				//if (!OnUserUpdate(fElapsedTime))
 					//m_bAtomActive = false;
-				OnUserUpdate(fElapsedTime);
+				
+				//first, set up the surface environment for onuserupdate to write to
+				SDL_Surface *rawWindow = SDL_GetWindowSurface(m_window); 	//get the surface pointer
+				SDL_DestroyTexture(layerTexture);
+
+				if (rawWindow != nullptr)
+				{
+				//lock the surface so that it can be modified
+				if (SDL_LockSurface(rawWindow) == 0)
+				{
+					//cout << "surface locked sucessfully" <<endl;
+				}
+				else
+				{
+					cout << "surface could not be locked" << endl;
+				}
+					
+					//do the actual 3d calculating and pixel moving
+					//bytes = (byte *)((Uint8*)rawWindow->pixels);
+					//cout << "bpp=" << (int)rawWindow->format->BytesPerPixel << endl;
+					//cout << (int)bytess << endl;
+					//Uint32 * const target_pixel = (Uint32 *) ((Uint8 *) rawWindow->pixels);
+					//cout << "surface size= " << sizeof(*target_pixel) << endl;
+					OnUserUpdate();
+					SDL_UnlockSurface(rawWindow);
+					
+					//now made the prepared surface into a texture and render that texture on to the screen
+					//hopefully, this will be really fast
+					layerTexture=SDL_CreateTextureFromSurface(m_render, rawWindow);
+					renderTexture(layerTexture, m_render, 0, 0);
+					//SDL_UpdateWindowSurface(m_window);
+					//cout << "surface unlocked" << endl;
+				}
 
 				// Update Title & Present Screen Buffer
 				//commenting this out because it conflicts with my engine's code that does this same thing
@@ -1294,8 +1472,8 @@ public:
 
 				// Render differences
 				//CHAR_INFO *buff_old, *buff_new;
-				buff_new = m_bufScreen[m_nCurrentBuffer];
-				buff_old = m_bufScreen[(m_nCurrentBuffer + 1) % 2];
+				//buff_new = m_bufScreen[m_nCurrentBuffer];
+				//buff_old = m_bufScreen[(m_nCurrentBuffer + 1) % 2];
 
 				/*SDL_SetRenderTarget(m_render, m_screen);
 
@@ -1340,8 +1518,8 @@ public:
 				*/
 
 				// Flip buffers
-				m_nCurrentBuffer = (m_nCurrentBuffer + 1) % 2;
-				m_bAtomActive = true;
+				//m_nCurrentBuffer = (m_nCurrentBuffer + 1) % 2;
+				//m_bAtomActive = true;
 
 				//my attemps to fix the memory leaks
 			//}
@@ -2336,7 +2514,7 @@ public:
 					//t.p[2].x, t.p[2].y, t.t[2].u, t.t[2].v, t.t[2].w, meshToProcess, t.triColor);
 					ColoredTriangle(t.p[0].x, t.p[0].y, t.t[0].w,
 					t.p[1].x, t.p[1].y, t.t[1].w,
-					t.p[2].x, t.p[2].y, t.t[2].w, color(0,155,255)*t.triColor);
+					t.p[2].x, t.p[2].y, t.t[2].w, colorToUint32(color(0,155,255)*t.triColor));
 				}
 				else if (meshToProcess->texSizeX == 1 && meshToProcess->texSizeY == 0)
 				{
@@ -2344,15 +2522,17 @@ public:
 					
 					ColoredTriangle(t.p[0].x, t.p[0].y, t.t[0].w,
 					t.p[1].x, t.p[1].y, t.t[1].w,
-					t.p[2].x, t.p[2].y, t.t[2].w, color(10,150,0)*t.triColor);
+					t.p[2].x, t.p[2].y, t.t[2].w, colorToUint32(color(10,150,0)*t.triColor));
+
 					//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, color(10,150,0)*t.triColor);
 					//DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_WHITE);
 				}
 				else
 				{
+					//cout << "t.triColor.getBlue()" << (int)t.triColor.getBlue() << endl;
 					TexturedTriangle(t.p[0].x, t.p[0].y, t.t[0].u, t.t[0].v, t.t[0].w,
 					t.p[1].x, t.p[1].y, t.t[1].u, t.t[1].v, t.t[1].w,
-					t.p[2].x, t.p[2].y, t.t[2].u, t.t[2].v, t.t[2].w, meshToProcess, t.triColor);
+					t.p[2].x, t.p[2].y, t.t[2].u, t.t[2].v, t.t[2].w, meshToProcess, (float)t.triColor.getBlue()/255.0f);
 				}
 				
 				//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, color(255,255,255));
@@ -2363,7 +2543,7 @@ public:
 	}
 
 	//made into non override
-	bool OnUserUpdate(float fElapsedTime)// override
+	bool OnUserUpdate()// override
 	{
 		/*
 		if (GetKey(VK_UP).bHeld)
@@ -2429,7 +2609,8 @@ public:
 		// Store triagles for rastering later
 		//vector<triangle> vecTrianglesToRaster;
 
-		drawGradient(m_render, 0, 0, ScreenWidth(), ScreenHeight(), 10);
+		//drawGradient(m_render, 0, 0, ScreenWidth(), ScreenHeight(), 10);
+		Draw3dSky(0, 0, 10);
 
 		//fTheta += 1.0f * fElapsedTime; // Uncomment to spin me right round baby right round
 
@@ -2476,6 +2657,8 @@ public:
 			appendRasterInformation(&vecTrianglesToRaster, meshesToRender.at(e), matView, matWorld);
 
 			rasterAllVectors(&vecTrianglesToRaster, meshesToRender.at(e));
+
+			//bufferToScreen();
 
 			//meshesToRender.at(e)->appendRasterInformation(&vecTrianglesToRaster);
 		/*for (auto tri : meshesToRender.at(e)->tris)
@@ -2702,7 +2885,7 @@ public:
 	void TexturedTriangle(	int x1, int y1, float u1, float v1, float w1,
 							int x2, int y2, float u2, float v2, float w2,
 							int x3, int y3, float u3, float v3, float w3,
-		mesh *theMesh, color luminance)
+		mesh *theMesh, float luminance)
 	{
 		if (y2 < y1)
 		{
@@ -2765,16 +2948,17 @@ public:
 		{
 			for (int i = y1; i <= y2; i++)
 			{
-				int ax = x1 + (float)(i - y1) * dax_step;
-				int bx = x1 + (float)(i - y1) * dbx_step;
+				int iscrwdt = i*gscreenx;
+				int ax = x1 + /*(float)*/(i - y1) * dax_step;
+				int bx = x1 + /*(float)*/(i - y1) * dbx_step;
 
-				float tex_su = u1 + (float)(i - y1) * du1_step;
-				float tex_sv = v1 + (float)(i - y1) * dv1_step;
-				float tex_sw = w1 + (float)(i - y1) * dw1_step;
+				float tex_su = u1 + /*(float)*/(i - y1) * du1_step;
+				float tex_sv = v1 + /*(float)*/(i - y1) * dv1_step;
+				float tex_sw = w1 + /*(float)*/(i - y1) * dw1_step;
 
-				float tex_eu = u1 + (float)(i - y1) * du2_step;
-				float tex_ev = v1 + (float)(i - y1) * dv2_step;
-				float tex_ew = w1 + (float)(i - y1) * dw2_step;
+				float tex_eu = u1 + /*(float)*/(i - y1) * du2_step;
+				float tex_ev = v1 + /*(float)*/(i - y1) * dv2_step;
+				float tex_ew = w1 + /*(float)*/(i - y1) * dw2_step;
 
 				if (ax > bx)
 				{
@@ -2788,7 +2972,7 @@ public:
 				tex_v = tex_sv;
 				tex_w = tex_sw;
 
-				float tstep = 1.0f / ((float)(bx - ax));
+				float tstep = 1.0f / (/*(float)*/(bx - ax));
 				float t = 0.0f;
 
 				for (int j = ax; j < bx; j++)
@@ -2802,17 +2986,21 @@ public:
 					tex_u *= theMesh->texSizeX;
 					tex_v *= theMesh->texSizeY;
 
-					if (tex_w > pDepthBuffer[i*ScreenWidth() + j])
+					if (tex_w > pDepthBuffer[iscrwdt + j])
 					{
 						//the texture/surface drawing line. Commenting out this, as well as the other line with this comment makes surfaces not be drawn
 						//Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
 						//Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
-						drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//DrawToSurface(j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						DrawToSurface(j, i, theMesh->rawPixelAt(tex_u / tex_w, tex_v / tex_w), luminance);
+						//DrawToSurface(j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//DrawToBuffer(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
 						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,color(255,255,255));
-						pDepthBuffer[i*ScreenWidth() + j] = tex_w;
+						pDepthBuffer[iscrwdt + j] = tex_w;
 					}
 					t += tstep;
 				}
@@ -2838,16 +3026,17 @@ public:
 		{
 			for (int i = y2; i <= y3; i++)
 			{
-				int ax = x2 + (float)(i - y2) * dax_step;
-				int bx = x1 + (float)(i - y1) * dbx_step;
+				int iscrwdt = i*gscreenx;
+				int ax = x2 + /*(float)*/(i - y2) * dax_step;
+				int bx = x1 + /*(float)*/(i - y1) * dbx_step;
 
-				float tex_su = u2 + (float)(i - y2) * du1_step;
-				float tex_sv = v2 + (float)(i - y2) * dv1_step;
-				float tex_sw = w2 + (float)(i - y2) * dw1_step;
+				float tex_su = u2 + /*(float)*/(i - y2) * du1_step;
+				float tex_sv = v2 + /*(float)*/(i - y2) * dv1_step;
+				float tex_sw = w2 + /*(float)*/(i - y2) * dw1_step;
 
-				float tex_eu = u1 + (float)(i - y1) * du2_step;
-				float tex_ev = v1 + (float)(i - y1) * dv2_step;
-				float tex_ew = w1 + (float)(i - y1) * dw2_step;
+				float tex_eu = u1 + /*(float)*/(i - y1) * du2_step;
+				float tex_ev = v1 + /*(float)*/(i - y1) * dv2_step;
+				float tex_ew = w1 + /*(float)*/(i - y1) * dw2_step;
 
 				if (ax > bx)
 				{
@@ -2861,7 +3050,7 @@ public:
 				tex_v = tex_sv;
 				tex_w = tex_sw;
 
-				float tstep = 1.0f / ((float)(bx - ax));
+				float tstep = 1.0f / (/*(float)*/(bx - ax));
 				float t = 0.0f;
 
 				for (int j = ax; j < bx; j++)
@@ -2878,17 +3067,22 @@ public:
 					tex_u *= theMesh->texSizeX;
 					tex_v *= theMesh->texSizeY;
 
-					if (tex_w > pDepthBuffer[i*ScreenWidth() + j])
+					if (tex_w > pDepthBuffer[iscrwdt + j])
 					{
 						//the texture/surface drawing line. Commenting out this, as well as the other line with this comment makes surfaces not be drawn
 						//Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
 						//Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
-						drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//DrawToSurface(j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//DrawToSurface(j, i, theMesh->rawPixelAt(tex_u / tex_w, tex_v / tex_w));
+						//DrawToSurface(j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						DrawToSurface(j, i, theMesh->rawPixelAt(tex_u / tex_w, tex_v / tex_w), luminance);
+						//DrawToBuffer(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
 						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,color(255,255,255));
-						pDepthBuffer[i*ScreenWidth() + j] = tex_w;
+						pDepthBuffer[iscrwdt + j] = tex_w;
 					}
 					t += tstep;
 				}
@@ -2899,8 +3093,12 @@ public:
 
 	void ColoredTriangle(	int x1, int y1, float w1,
 							int x2, int y2, float w2,
-							int x3, int y3, float w3, color luminance)
+							int x3, int y3, float w3, Uint32 luminance)
 	{
+		//cout << "w1: " << (w1)*1000000 << " w2: " << w2*1000000 << "w3: " << w3*1000000 << endl;
+		//define color here using lower level sdl functions so it's only being defined once per face
+		//half test;
+		//SDL_SetRenderDrawColor(m_render, luminance.getRed(), luminance.getGreen(), luminance.getBlue(), luminance.getAlpha());
 		if (y2 < y1)
 		{
 			swap(y1, y2);
@@ -2925,10 +3123,13 @@ public:
 		int dy1 = y2 - y1;
 		int dx1 = x2 - x1;
 		float dw1 = w2 - w1;
+		//yep, half floats. I'm getting pretty desperate for more performance here
+		//short int dw1 = (w2-w1)*1000000;
 
 		int dy2 = y3 - y1;
 		int dx2 = x3 - x1;
 		float dw2 = w3 - w1;
+		//short int dw2 = (w3-w1)*1000000;
 
 		float tex_w;
 
@@ -2941,16 +3142,24 @@ public:
 		if (dy1) dw1_step = dw1 / (float)abs(dy1);
 
 		if (dy2) dw2_step = dw2 / (float)abs(dy2);
+		int iy1;
 
 		if (dy1)
 		{
 			for (int i = y1; i <= y2; i++)
 			{
-				int ax = x1 + (float)(i - y1) * dax_step;
-				int bx = x1 + (float)(i - y1) * dbx_step;
+				//calculate i * screenwidth now instead of every time during the j loop
+				int iscrwdt = i*gscreenx;
 
-				float tex_sw = w1 + (float)(i - y1) * dw1_step;
-				float tex_ew = w1 + (float)(i - y1) * dw2_step;
+				iy1=i - y1;
+				int ax = x1 + /*(float)*/(iy1) * dax_step;
+				int bx = x1 + /*(float)*/(iy1) * dbx_step;
+
+				float tex_sw = (w1 + /*(float)*/(iy1) * dw1_step);
+				float tex_ew = (w1 + /*(float)*/(iy1) * dw2_step);
+				//float tex_sw = w1 + /*(float)*/(i - y1) * dw1_step;
+				//float tex_ew = w1 + /*(float)*/(i - y1) * dw2_step;
+				//cout << "tex_sw = " << tex_sw << ", tex_ew = " << tex_ew << endl;
 
 				if (ax > bx)
 				{
@@ -2960,29 +3169,32 @@ public:
 
 				tex_w = tex_sw;
 
-				float tstep = 1.0f / ((float)(bx - ax));
+				float tstep = 1.0f / ((bx - ax));
 				float t = 0.0f;
 
 				for (int j = ax; j < bx; j++)
 				{
-					tex_w = (1.0f - t) * tex_sw + t * tex_ew;
+					tex_w = ((1.0f - t) * tex_sw) + (t * tex_ew);
 					
 					//tex_u needs to be multiplied by texture width
 					//tex_u needs to be multiplied by texture height
 					//tex_u *= theMesh->texSizeX;
 					//tex_v *= theMesh->texSizeY;
 
-					if (tex_w > pDepthBuffer[i*ScreenWidth() + j])
+					if (tex_w > pDepthBuffer[iscrwdt + j])
 					{
 						//the texture/surface drawing line. Commenting out this, as well as the other line with this comment makes surfaces not be drawn
 						//Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
 						//Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
-						drawPixel(m_render, j, i, luminance);
+						//drawPixel(m_render, j, i, luminance);
+						//SDL_RenderDrawPoint(m_render, j, i);
+						DrawToSurface(j, i, luminance);
+						//DrawToBuffer(j,i,luminance);
 						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,color(255,255,255));
-						pDepthBuffer[i*ScreenWidth() + j] = tex_w;
+						pDepthBuffer[iscrwdt + j] = tex_w;
 					}
 					t += tstep;
 				}
@@ -3003,12 +3215,14 @@ public:
 		{
 			for (int i = y2; i <= y3; i++)
 			{
-				int ax = x2 + (float)(i - y2) * dax_step;
-				int bx = x1 + (float)(i - y1) * dbx_step;
+				int iscrwdt = i*gscreenx;
 
-				float tex_sw = w2 + (float)(i - y2) * dw1_step;
+				int ax = x2 + /*(float)*/(i - y2) * dax_step;
+				int bx = x1 + /*(float)*/(i - y1) * dbx_step;
 
-				float tex_ew = w1 + (float)(i - y1) * dw2_step;
+				float tex_sw = w2 + /*(float)*/(i - y2) * dw1_step;
+
+				float tex_ew = w1 + /*(float)*/(i - y1) * dw2_step;
 
 				if (ax > bx)
 				{
@@ -3018,8 +3232,176 @@ public:
 
 				tex_w = tex_sw;
 
-				float tstep = 1.0f / ((float)(bx - ax));
+				float tstep = 1.0f / ((bx - ax));
 				float t = 0.0f;
+
+				for (int j = ax; j < bx; j++)
+				{
+					tex_w = (1.0f - t) * tex_sw + t * tex_ew;
+					//cout << "tex_u = " << to_string(tex_u);
+					//cout << ", tex_v = " << to_string(tex_v);
+					//cout << ", tex_w = " << to_string(tex_w) << endl;
+
+					//tex_u needs to be multiplied by texture width
+					//tex_u needs to be multiplied by texture height
+					//tex_u *= theMesh->texSizeX;
+					//tex_v *= theMesh->texSizeY;
+
+					if (tex_w > pDepthBuffer[iscrwdt + j])
+					{
+						//the texture/surface drawing line. Commenting out this, as well as the other line with this comment makes surfaces not be drawn
+						//Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
+						//Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//drawPixel(m_render, j, i, luminance);
+						DrawToSurface(j, i, luminance);
+						//SDL_RenderDrawPoint(m_render, j, i);
+						//DrawToBuffer(j,i,luminance);
+						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,color(255,255,255));
+						pDepthBuffer[iscrwdt + j] = tex_w;
+					}
+					t += tstep;
+				}
+			}	
+		}
+
+		//SDL_SetRenderDrawColor(m_render, 0, 0, 0, SDL_ALPHA_OPAQUE);	
+	}
+
+	//lower-precision version. doesn't do anything faster because the half precision floats don't use the cpus floating point unit
+	void ColoredTriangleLP(	int x1, int y1, half w1,
+							int x2, int y2, half w2,
+							int x3, int y3, half w3, color luminance)
+	{
+		//cout << "w1: " << (w1)*1000000 << " w2: " << w2*1000000 << "w3: " << w3*1000000 << endl;
+		//define color here using lower level sdl functions so it's only being defined once per face
+		//half test;
+		//SDL_SetRenderDrawColor(m_render, luminance.getRed(), luminance.getGreen(), luminance.getBlue(), luminance.getAlpha());
+		if (y2 < y1)
+		{
+			swap(y1, y2);
+			swap(x1, x2);
+			swap(w1, w2);
+		}
+
+		if (y3 < y1)
+		{
+			swap(y1, y3);
+			swap(x1, x3);
+			swap(w1, w3);
+		}
+
+		if (y3 < y2)
+		{
+			swap(y2, y3);
+			swap(x2, x3);
+			swap(w2, w3);
+		}
+
+		int dy1 = y2 - y1;
+		int dx1 = x2 - x1;
+		half dw1 = w2 - w1;
+		//yep, half floats. I'm getting pretty desperate for more performance here
+
+		int dy2 = y3 - y1;
+		int dx2 = x3 - x1;
+		half dw2 = w3 - w1;
+		//short int dw2 = (w3-w1)*1000000;
+
+		half tex_w;
+
+		half dax_step = 0.0_h, dbx_step = 0.0_h,
+			dw1_step=0.0_h, dw2_step=0.0_h;
+
+		if (dy1) dax_step = dx1 / (half)abs(dy1);
+		if (dy2) dbx_step = dx2 / (half)abs(dy2);
+
+		if (dy1) dw1_step = dw1 / (half)abs(dy1);
+
+		if (dy2) dw2_step = dw2 / (half)abs(dy2);
+
+		if (dy1)
+		{
+			for (int i = y1; i <= y2; i++)
+			{
+				int ax = x1 + (half)(i - y1) * dax_step;
+				int bx = x1 + (half)(i - y1) * dbx_step;
+
+				half tex_sw = w1 + (half)(i - y1) * dw1_step;
+				half tex_ew = w1 + (half)(i - y1) * dw2_step;
+
+				if (ax > bx)
+				{
+					swap(ax, bx);
+					swap(tex_sw, tex_ew);
+				}
+
+				tex_w = tex_sw;
+
+				half tstep = 1.0_h / ((half)(bx - ax));
+				half t = 0.0_h;
+
+				for (int j = ax; j < bx; j++)
+				{
+					tex_w = (1.0_h - t) * tex_sw + t * tex_ew;
+					
+					//tex_u needs to be multiplied by texture width
+					//tex_u needs to be multiplied by texture height
+					//tex_u *= theMesh->texSizeX;
+					//tex_v *= theMesh->texSizeY;
+
+					if (tex_w > pDepthBuffer[i*ScreenWidth() + j])
+					{
+						//the texture/surface drawing line. Commenting out this, as well as the other line with this comment makes surfaces not be drawn
+						//Draw(j, i, tex->SampleGlyph(tex_u / tex_w, tex_v / tex_w), tex->SampleColour(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
+						//Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
+						//drawPixel(m_render, j, i, luminance);
+						//SDL_RenderDrawPoint(m_render, j, i);
+						DrawToSurface(j, i, luminance);
+						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w));
+						//Draw(j,i,color(255,255,255));
+						pDepthBuffer[i*ScreenWidth() + j] = tex_w;
+					}
+					t += tstep;
+				}
+
+			}
+		}
+
+		dy1 = y3 - y2;
+		dx1 = x3 - x2;
+		dw1 = w3 - w2;
+
+		if (dy1) dax_step = dx1 / (half)abs(dy1);
+		if (dy2) dbx_step = dx2 / (half)abs(dy2);
+
+		if (dy1) dw1_step = dw1 / (half)abs(dy1);
+
+		if (dy1)
+		{
+			for (int i = y2; i <= y3; i++)
+			{
+				int ax = x2 + (half)(i - y2) * dax_step;
+				int bx = x1 + (half)(i - y1) * dbx_step;
+
+				half tex_sw = w2 + (half)(i - y2) * dw1_step;
+
+				half tex_ew = w1 + (half)(i - y1) * dw2_step;
+
+				if (ax > bx)
+				{
+					swap(ax, bx);
+					swap(tex_sw, tex_ew);
+				}
+
+				tex_w = tex_sw;
+
+				half tstep = 1.0_h / ((half)(bx - ax));
+				half t = 0.0_h;
 
 				for (int j = ax; j < bx; j++)
 				{
@@ -3040,7 +3422,9 @@ public:
 						//Draw(j,i,pixelAtPos(mesh_tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,pixelAtPos(tex, m_render, m_window, tex_u / tex_w, tex_v / tex_w)*luminance);
 						//Draw(j,i,theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w)*luminance);
-						drawPixel(m_render, j, i, luminance);
+						//drawPixel(m_render, j, i, luminance);
+						//SDL_RenderDrawPoint(m_render, j, i);
+						DrawToSurface(j, i, luminance);
 						//drawPixel(m_render, j, i, theMesh->texPixelAt(tex_u / tex_w, tex_v / tex_w));
 						//Draw(j,i,color(255,255,255));
 						pDepthBuffer[i*ScreenWidth() + j] = tex_w;
@@ -3048,7 +3432,9 @@ public:
 					t += tstep;
 				}
 			}	
-		}	
+		}
+
+		//SDL_SetRenderDrawColor(m_render, 0, 0, 0, SDL_ALPHA_OPAQUE);	
 	}
 
 };
