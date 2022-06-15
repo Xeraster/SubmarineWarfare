@@ -11,14 +11,24 @@ SDL_Texture *friendlyShipIcon;
 SDL_Texture *neutralShipIcon;
 SDL_Texture *enemyShipIcon;
 
+SDL_Texture *waypointButtonTexture;
+SDL_Texture *markerButtonTexture;
+SDL_Texture *protractorButtonTexture;
+SDL_Texture *rulerButtonTexture;
+SDL_Texture *eraserButtonTexture;
+SDL_Texture *compassButtonTexture;
+
 extern olcEngine3D game3dRenderer;
 
 class worldInfo
 {
 public:
 	worldInfo();
-	worldInfo(playerInfo *input, string heightmapName, SDL_Renderer *ren, SDL_Window *win); 	//set up a world from given playerInfo and improvise from there
+	worldInfo(playerInfo *input, string mapName, SDL_Renderer *ren, SDL_Window *win); 	//set up a world from given playerInfo and improvise from there
 	~worldInfo();
+
+	//loads the map data from a corresponding map file in data/maps/. passes heightmap name by reference and then loads ports by reference
+	int loadMapData(string mapName, string *heightmapName);
 
 	submarine *m_playerSubmarine;
 	playerInfo *m_playerCampaignInfo;
@@ -46,12 +56,15 @@ public:
 	//prepares data to be rendered for frame and sends prepared data to the 3d renderer
 	void prepareToRenderFrame(SDL_Renderer *ren, SDL_Window *win, olcEngine3D *engineRender);
 
-	bool drawMap(SDL_Renderer *ren, double zoom, double posX, double posY);
+	bool drawMap(SDL_Renderer *ren, double zoom, double *posX, double *posY, int mouseX, int mouseY, Uint32 lastMouse);
 
 	void drawShipOnMap(SDL_Renderer *ren, double zoom, double playerX, double playerY, ship *whichShip);
 
-	double worldToMapX(double zoom, double mapX, double inX);
+	//made these globally accessible instead
+	/*double worldToMapX(double zoom, double mapX, double inX);
 	double worldToMapY(double zoom, double mapY, double inY);
+	double mapToWorldX(double zoom, double posX, double mapX);
+	double mapToWorldY(double zoom, double posY, double mapY);*/
 
 	//stuff spawning commands
 	void spawnShip(string shipClass, double posX, double posY, double heading);
@@ -61,6 +74,8 @@ public:
 	void generateNearTerrain(double posX, double posY, int distance);
 
 	void generateNearOcean(double posX, double posY, int distance);
+
+	void physicsTick();
 
 	//return 0 = success. 1 = failure
 	//dataElement is the pointer to the element containing the player info data
@@ -82,6 +97,40 @@ public:
 	//vector<projectile> m_allProjectiles;
 	//vector<depthCharge> m_depthCharges;
 
+	int numWorldPorts() const { return portsInWorld.size(); }
+	port getPort(int index) const { return portsInWorld.at(index); }
+
+	button waypointButton;
+	button markerButton;
+	button protractorButton;
+	button rulerButton;
+	button compassButton;
+	button eraserButton;
+	bool mapDragging = false;
+	double mouseBeforeX = 0.0f;
+	double mouseBeforeY = 0.0f;
+	bool markerMode = false;
+	bool rulerMode = false;
+	bool protractorMode = false;
+	bool compassMode = false;
+	bool eraseMode = false;
+	vector<markerPoint> points;
+	vector<rulerLine> lines;
+	vector<protractorAngle> angles;
+	vector<compassCircle> circles;
+	bool holdingClick = false;
+	bool newClick = true;
+
+	bool isInUtilityMode();
+	void rulerModeWorker(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse, double zoom, double mapCenterX, double mapCenterY);
+	void protractorModeWorker(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse, double zoom, double mapCenterX, double mapCenterY);
+	void compassModeWorker(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse, double zoom, double mapCenterX, double mapCenterY);
+
+	float m_metersSinceLastTerrainUpdate;
+	double xPosLastUpdate = 0;
+	double yPosLastUpdate = 0;
+
+
 	worldInfo& operator=(const worldInfo& other);
 private:
 
@@ -97,6 +146,8 @@ private:
 
 	mesh m_terrain;
 	mesh m_ocean;
+
+	vector<port> portsInWorld;
 };
 
 void loadMapAssets(SDL_Renderer *ren, SDL_Window *win);

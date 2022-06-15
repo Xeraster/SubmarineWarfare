@@ -217,6 +217,32 @@ public:
 	//called on every frame where the periscope need to rotate left or right. positive values for right, negative values for left
 	void periscopeRotate(double spdMult);
 
+	void setPosX(double x) { worldPosX = x; submarineMesh.posX = x; }
+	void setPosY(double y) { worldPosY = y; submarineMesh.posY = y; }
+	void setPosZ(double z) { worldPosZ = z; submarineMesh.posZ = z; }
+	void setRotX(double hdg) { worldRotX = hdg; submarineMesh.rotX = hdg; }
+	void setRotY(double hdg) { worldRotY = hdg; submarineMesh.rotY = hdg; }
+	void setRotZ(double hdg) { worldRotZ = hdg; submarineMesh.rotZ = hdg; }
+
+	void setSpeed(double newSpeed, bool alsoSetTargetSpeed = true) { m_currentSpeed = newSpeed; if (alsoSetTargetSpeed) m_targetSpeed = newSpeed; }
+	double getSpeed() const { return m_currentSpeed; }
+	double getTargetSpeed() const { return m_targetSpeed; }
+
+	float getTargetHeading() const { return m_targetHeading; }
+	double getTargetDepth() const { return m_targetDepth; }
+	void setTargetDepth(double newDepth) { m_targetDepth = newDepth; }
+	void setTargetHeading(double hdg) { m_targetHeading = hdg; }
+	void setRudder(double rudder) { m_rudder = rudder; }
+	double getRudder() const { return m_rudder; }
+	void setRudderTarget(float target) { m_rudderTarget = target; }
+	float getRudderTarget() const { return m_rudderTarget; } 
+	void setDivePlanes(double rotation) { m_divePlanes; }
+	float getDivePlanes() const { return m_divePlanes; }
+	void targetSpeedFromDial(double dialOutput);
+	void targetHeadingFromDial(float dialOutput);
+
+	void physicsTick();
+
 	/*
 	=========================================================
 	stuff having to do with loading and/or saving
@@ -356,6 +382,16 @@ protected:
 	upgradePart *m_hullUpgrade;
 
 	upgradePart *m_stealthMisc;
+
+	//physics related variables and stuff
+
+	double m_currentSpeed;
+	double m_targetSpeed;
+	double m_targetHeading;
+	double m_rudderTarget;
+	double m_rudder;
+	double m_targetDepth;
+	double m_divePlanes;
 
 };
 

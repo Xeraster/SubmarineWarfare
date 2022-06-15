@@ -478,7 +478,7 @@ void drawMainMenu(SDL_Renderer *ren, int screenSizeX, int screenSizeY, SDL_Windo
 			//im recycling the start new campaign start button because it's already the correct size and in the correct screen scaled position
 			if (startNewCampaign.draw(ren, mouseX, mouseY, lastMouse))
 			{
-				theWorld = worldInfo(playerCampaignInfo, "heightmap4096", ren, win);
+				theWorld = worldInfo(playerCampaignInfo, "default.xml", ren, win);
 				//preliminaryMissionStartScreen = false;
 				enable3D = true;
 				ingameMenus = true;
@@ -489,6 +489,10 @@ void drawMainMenu(SDL_Renderer *ren, int screenSizeX, int screenSizeY, SDL_Windo
 
 				//spawn a ship jhust for kix
 				theWorld.spawnShip("PoopBarge", 50, 10, 90);
+				theWorld.m_ships.front().setSpeed(0, true);
+				theWorld.m_ships.front().setRotY(0);
+				theWorld.m_ships.front().setTargetHeading(170);
+				theWorld.m_ships.front().setTargetSpeed(6);
 			}
 
 			drawPeliminaryMissionStartScreen(ren, mouseX, mouseY, lastMouse);
@@ -1093,10 +1097,12 @@ void drawPeliminaryMissionStartScreen(SDL_Renderer *ren, int mouseX, int mouseY,
 void loadIngameSpecificTextures(SDL_Renderer *ren)
 {
 	generic_dial_needle = loadTextureToRam("Textures/Menus/Controls/generic_dial_needle.png", ren);
+	compass_dial_needle = loadTextureToRam("Textures/Menus/Controls/gyrocompass_dial_needle.png", ren);
 
 	string depthMeterSmallPath = "Textures/Menus/Controls/Depth 50.png";
 	string compassTexturePath = "Textures/Menus/Controls/compass.png";
-	string throttleTexturePath = "Textures/Menus/Controls/Throttle.png";
+	string throttleTexturePath = "Textures/Menus/Controls/Throttle2.png";
+	string displayCompassTexturePath = "Textures/Menus/Controls/Heading.png";
 	
 	string periscopeButtonTexturePath = "Textures/Menus/Shortcuts/Periscope.png";
 	string mapViewTexturePath = "Textures/Menus/Shortcuts/NavMap.png";
@@ -1112,14 +1118,38 @@ void loadIngameSpecificTextures(SDL_Renderer *ren)
 	compassTexture = SDL_CreateTextureFromSurface(ren, bmp2);
 	SDL_FreeSurface(bmp2);
 
+	throttleTexture = loadTextureToRam(throttleTexturePath ,ren);
+	displayCompassTexture = loadTextureToRam(displayCompassTexturePath, ren);
+
 	//min 30. max 329
-	depthMeterDial = dial(50*gscreenx/800, 700*gscreenx/800, 500*gscreeny/600, 65, depthMeterSmall, 30, 329);
+	if (static_cast<double>(gscreenx)/static_cast<double>(gscreeny) < 1.6)
+	{
+		depthMeterDial = dial(50*gscreenx/800, 700*gscreenx/800, 500*gscreeny/600, 65, depthMeterSmall, 30, 329);
+		throttleDial = dial(50*gscreenx/800, 600*gscreenx/800, 500*gscreeny/600, 65, throttleTexture, 29, 329);
+
+		//as with most dials, there is a "settable" dial and  a display dial I could make that into its own type of dial class but there's only a handful of dials in this whole program so fuck it.
+		headingDial = dial(50*gscreenx/800, 500*gscreenx/800, 500*gscreeny/600, 65, displayCompassTexture);
+		headingDisplayDial = dial(50*gscreenx/800, 500*gscreenx/800, 500*gscreeny/600, 65, nullptr);
+	}
+	else
+	{
+		//if in a widescreen-like mode, do different positioning for the dials
+		depthMeterDial = dial(50*gscreenx/800, 700*gscreenx/800, 450*gscreeny/600, 65, depthMeterSmall, 30, 329);
+		throttleDial = dial(50*gscreenx/800, 600*gscreenx/800, 450*gscreeny/600, 12, throttleTexture);
+
+		//as with most dials, there is a "settable" dial and  a display dial I could make that into its own type of dial class but there's only a handful of dials in this whole program so fuck it.
+		headingDial = dial(50*gscreenx/800, 500*gscreenx/800, 450*gscreeny/600, 360, displayCompassTexture);
+		headingDisplayDial = dial(50*gscreenx/800, 500*gscreenx/800, 450*gscreeny/600, 360, nullptr);
+		//renderTextureEx(throttleTexture, ren, 600*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
+		//renderTextureEx(compassTexture, ren, 500*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
+	}
+	headingDisplayDial.setNeedleTexture(compassTexture);
+	headingDial.setNeedleTexture(compass_dial_needle);
 	//dial(depthMeterSmall, ren, 700*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
 
 	//bmp2 = IMG_Load(throttleTexturePath.c_str());
 	//throttleTexture = SDL_CreateTextureFromSurface(ren, bmp2);
 	//SDL_FreeSurface(bmp2);
-	throttleTexture = loadTextureToRam(throttleTexturePath ,ren);
 
 	periscopeButtonTexture = loadTextureToRam(periscopeButtonTexturePath ,ren);
 	mapViewTexture = loadTextureToRam(mapViewTexturePath ,ren);
@@ -1158,11 +1188,11 @@ void loadIngameSpecificTextures(SDL_Renderer *ren)
 
 void beIngame(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
 {
-	if (test3dButtonF1.draw(ren, mouseX, mouseY, lastMouse))
+	/*if (test3dButtonF1.draw(ren, mouseX, mouseY, lastMouse))
 	{
 		reverseMeshPushbackOrder = !reverseMeshPushbackOrder;
 		game3dRenderer.Start();
-	}
+	}*/
 
 	if (periscopeView)
 	{
@@ -1245,7 +1275,7 @@ void beIngame(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
 		enable3D = true;
 	}
 
-	if (test3dButtonF2.draw(ren, mouseX, mouseY, lastMouse))
+	/*if (test3dButtonF2.draw(ren, mouseX, mouseY, lastMouse))
 	{
 		offset1++;
 		if (offset1 == 2) 
@@ -1259,26 +1289,44 @@ void beIngame(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
 		}
 
 		game3dRenderer.Start();
-	}
+	}*/
 
-	drawText(ren, textSizeNormal, color(255,255,255), "in game. Now what, you asshat?", 200, 200);
+	//drawText(ren, textSizeNormal, color(255,255,255), "in game. Now what, you asshat?", 200, 200);
 
-	double testDialVar = depthMeterDial.draw(ren, mouseX, mouseY, lastMouse);
-	drawText(ren, textSizeSeven, color(255,255,255), "depth = " + to_string(testDialVar), 400, 400);
-	drawText(ren, textSizeSeven, color(255,255,255), "degrees = " + to_string(depthMeterDial.degrees()), 400, 450);
+	playerCampaignInfo->playerEquippedSubmarine()->setTargetDepth(depthMeterDial.draw(ren, mouseX, mouseY, lastMouse));
+
+	//set heading display dial to the submarine's current heading
+	headingDisplayDial.setValue(playerCampaignInfo->playerEquippedSubmarine()->worldRotY * -1);
+	headingDisplayDial.draw(ren, NULL, NULL, NULL); //read-only backdrop forthe heading/compass dial
+	playerCampaignInfo->playerEquippedSubmarine()->targetSpeedFromDial(throttleDial.draw(ren, mouseX, mouseY, lastMouse));
+	//playerCampaignInfo->playerEquippedSubmarine()->worldRotY = 60;
+	//double testDialVar = (headingDial.draw(ren, mouseX, mouseY, lastMouse)+ 180);
+	playerCampaignInfo->playerEquippedSubmarine()->targetHeadingFromDial(headingDial.draw(ren, mouseX, mouseY, lastMouse)+ 180);
+	//if (testDialVar > 360) testDialVar -= 360;
+
+	//draw current exact heading value above heading dial
+	string formattedHeading = doubleToString(playerCampaignInfo->playerEquippedSubmarine()->worldRotY);
+	drawText(ren, textSizeSmall, color(255,255,255), formattedHeading, headingDisplayDial.posX() + (headingDisplayDial.sizeX()*0.3), headingDisplayDial.posY() - headingDisplayDial.sizeY()*0.2);
+	
+	//draw current exact speed above throttle telegram dial
+	string formattedSpeed = doubleToString(playerCampaignInfo->playerEquippedSubmarine()->getSpeed());
+	drawText(ren, textSizeSmall, color(255,255,255), formattedSpeed, throttleDial.posX() + (throttleDial.sizeX()*0.3), throttleDial.posY() - throttleDial.sizeY()*0.2);
+	//drawText(ren, textSizeSeven, color(255,255,255), "depth = " + to_string(testDialVar), 400, 400);
+	//drawText(ren, textSizeSeven, color(255,255,255), "degrees = " + to_string(throttleDial.degrees()), 400, 450);
 	//renderTextureEx(depthMeterSmall, ren, 700*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
-	renderTextureEx(throttleTexture, ren, 600*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
-	renderTextureEx(compassTexture, ren, 500*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
+	//renderTextureEx(throttleTexture, ren, 600*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
+	//renderTextureEx(compassTexture, ren, 500*gscreenx/800, 500*gscreeny/600, 100*gscreenx/800, 100*gscreenx/800, 0);
 
-	drawText(ren, textSizeSeven, color(255,255,255), to_string(offset2) + " " + to_string(offset1), 820, 150);
+	//drawText(ren, textSizeSeven, color(255,255,255), to_string(offset2) + " " + to_string(offset1), 820, 150);
 
-	drawText(ren, textSizeSeven, color(255,255,255), to_string(shiftSlot3d), 820, 200);
-	if (test3dButtonF3.draw(ren, mouseX, mouseY, lastMouse))
+	//drawText(ren, textSizeSeven, color(255,255,255), to_string(shiftSlot3d), 820, 200);
+	
+	/*if (test3dButtonF3.draw(ren, mouseX, mouseY, lastMouse))
 	{
 		shiftSlot3d++;
 		if (shiftSlot3d > 10) shiftSlot3d = 0;
 		game3dRenderer.Start();
-	}
+	}*/
 }
 
 void periscopeScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
@@ -1326,32 +1374,33 @@ void periscopeScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse
 
 	if (lastKey[SDL_SCANCODE_PAGEDOWN])
 	{
-		cout << "pagedown asserted" << endl;
+		//cout << "pagedown asserted" << endl;
 		playerCampaignInfo->playerEquippedSubmarine()->periscopeRaise(-0.1f);
-		cout << "periscope height = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight << endl;
-		game3dRenderer.setCamPosY(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight);
+		//cout << "periscope height = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight << endl;
+		//game3dRenderer.setCamPosY(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight - playerCampaignInfo->playerEquippedSubmarine()->worldPosY);
 	}
 
 	if (lastKey[SDL_SCANCODE_PAGEUP])
 	{
-		cout << "pageup asserted" << endl;
+		//cout << "pageup asserted" << endl;
 		playerCampaignInfo->playerEquippedSubmarine()->periscopeRaise(0.1f);
-		cout << "periscope height = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight << endl;
-		game3dRenderer.setCamPosY(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight);
+		//cout << "periscope height = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight << endl;
+		//game3dRenderer.setCamPosY(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeHeight - playerCampaignInfo->playerEquippedSubmarine()->worldPosY);
 	}
 
 	if (lastKey[SDL_SCANCODE_A] || lastKey[SDL_SCANCODE_LEFT])
 	{
 		playerCampaignInfo->playerEquippedSubmarine()->periscopeRotate(-1.0f);
-		cout << "periscope rot = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation << endl;
-		game3dRenderer.setCamRot(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation);
+		//cout << "periscope rot = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation << endl;
+		//game3dRenderer.setCamRot(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation);
 	}
 
 	if (lastKey[SDL_SCANCODE_D] || lastKey[SDL_SCANCODE_RIGHT])
 	{
 		playerCampaignInfo->playerEquippedSubmarine()->periscopeRotate(1.0f);
-		cout << "periscope rot = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation << endl;
-		game3dRenderer.setCamRot(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation);
+		//cout << "periscope rot = " << playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation << endl;
+		//camera rotation settings gets done in worldinfo physics tick now instead
+		//game3dRenderer.setCamRot(playerCampaignInfo->playerEquippedSubmarine()->m_periscopeRotation);
 	}
 }
 
@@ -1368,7 +1417,7 @@ void mapScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
 		cout << "map zoom =" << mapZoom << endl;
 	}
 
-	if (mapDragging)
+	/*if (mapDragging)
 	{
 		mapViewX += (mouseX - mouseBeforeX)/mapZoom;
 		mapViewY += (mouseY - mouseBeforeY)/mapZoom;
@@ -1384,7 +1433,7 @@ void mapScreen(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse)
 	else
 	{
 		mapDragging = false;
-	}
+	}*/
 
-	theWorld.drawMap(ren, mapZoom, mapViewX, mapViewY);
+	theWorld.drawMap(ren, mapZoom, &mapViewX, &mapViewY, mouseX, mouseY, lastMouse);
 }

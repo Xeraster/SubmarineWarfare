@@ -326,6 +326,14 @@ submarine :: submarine(vector<string> fileData)
 	worldRotZ = 0;
 	m_periscopeHeight = 0;
 
+	m_currentSpeed = 0;
+	m_targetSpeed = 0;
+	m_targetHeading = 0;
+	m_rudder = 0;
+	m_rudderTarget = 0;
+	m_targetDepth = 0;
+	m_divePlanes = 0;
+
 }
 
 submarine :: ~submarine()
@@ -817,6 +825,14 @@ submarine& submarine :: operator=(submarine& other)
 	worldRotY = other.worldRotY;
 	worldRotZ = other.worldRotZ;
 	m_periscopeHeight = other.m_periscopeHeight;
+
+	m_currentSpeed = other.getTargetHeading();
+	m_targetSpeed = other.getTargetSpeed();
+	m_targetHeading = other.getTargetSpeed();
+	m_rudder = other.getRudder();
+	m_rudderTarget = other.getRudderTarget();
+	m_targetDepth = other.getTargetDepth();
+	m_divePlanes = other.getDivePlanes();
 
 	return *this;
 }
@@ -1787,6 +1803,160 @@ void submarine :: periscopeRotate(double spdMult)
 	else if (m_periscopeRotation > 360) m_periscopeRotation = static_cast<int>(m_periscopeRotation) % 360;
 
 	return void();
+}
+
+void submarine :: targetSpeedFromDial(double dialOutput)
+{
+	//cout << dialOutput << endl;
+	if (dialOutput >= 11.5 || dialOutput < 0.5)
+	{
+		//all stop segment
+		m_targetSpeed = 0;
+
+	}
+	else if (dialOutput >= 0.5 && dialOutput < 1.5)
+	{
+		//ahead slow
+		m_targetSpeed = m_topspeed_surface * 0.15;
+	}
+	else if (dialOutput >= 1.5 && dialOutput < 2.5)
+	{
+		//ahead one third
+		m_targetSpeed = m_topspeed_surface * 0.3;
+	}
+	else if (dialOutput >= 2.5 && dialOutput < 3.5)
+	{
+		//ahead standard
+		m_targetSpeed = m_topspeed_surface * 0.65;
+	}
+	else if (dialOutput >= 3.5 && dialOutput < 4.5)
+	{
+		//ahead full
+		m_targetSpeed = m_topspeed_surface * 0.9;
+	}
+	else if (dialOutput >= 4.5 && dialOutput < 5.5)
+	{
+		//ahead flank
+		m_targetSpeed = m_topspeed_surface * 1.0;
+	}
+	else if (dialOutput >= 7.5 && dialOutput < 8.5)
+	{
+		//back emergency
+		m_targetSpeed = m_topspeed_surface * -1.0;
+	}
+	else if (dialOutput >= 8.5 && dialOutput < 9.5)
+	{
+		//back full
+		m_targetSpeed = m_topspeed_surface * -0.65;
+	}
+	else if (dialOutput >= 9.5 && dialOutput < 10.5)
+	{
+		//back one third
+		m_targetSpeed = m_topspeed_surface * -0.3;
+	}
+	else if (dialOutput >= 10.5 && dialOutput < 11.5)
+	{
+		//back slow
+		m_targetSpeed = m_topspeed_surface * -0.15;
+	}
+	//cout << "submarine target speed set to " << m_targetSpeed << endl;
+	return void();
+}
+
+void submarine :: targetHeadingFromDial(float dialOutput)
+{
+	m_targetHeading = dialOutput;
+	if (m_targetHeading > 360) m_targetHeading -= 360;
+
+	//cout << "target heading = " << m_targetHeading << endl;
+
+	return void();
+}
+
+void submarine :: physicsTick()
+{
+	//make submarine go in a direction based on current speed
+	//1 knot = 0.5144444 meters per second or 0.008574074 meters per frame (at a target rate of 60fps)
+	double dx = sin(worldRotY * (3.141592/180)) * (m_currentSpeed * 0.008574074) * -1;
+	double dy = cos(worldRotY * (3.141592/180)) * (m_currentSpeed * 0.008574074);
+
+	//append speed to ship world position
+	worldPosX = dx + worldPosX;
+	worldPosZ = dy + worldPosZ;
+	setPosX(worldPosX); 		//this is inverted for some reason
+	setPosZ(worldPosZ);
+
+	float targetSpeedDiff = m_targetSpeed - m_currentSpeed;
+	if (targetSpeedDiff >= 0 && m_currentSpeed <= m_topspeed_surface)
+	{
+		//if speed is less than target speed, speed up
+		//based on almost nothing, this should mean a poopbarge with an acceleration of 0.3 should accelerate at 0.3*60*0.05=0.9 knots per second
+		//it would take 13.333 seconds for a poop barge to accelerate to its top speed of 12 knots
+		setSpeed(m_currentSpeed + (m_acceleration*0.05), false);
+	}
+	else
+	{
+		//if speed is more than target speed, slow down using same mechanics as speeding up. In the future this will change to something more realistic
+		setSpeed(m_currentSpeed - (m_acceleration*0.05), false);
+	}
+
+	//==========================================
+	//heading and rotation related stuff
+	//==========================================
+	//tl;dr = if heading != target heading, set rudder target. if rudder != rudder target, set rudder speed
+	//first, get difference between 2 angles to figure out which direction the ship needs to steer to get to its target heading
+	
+	//negative means its shorter to turn left to meet target heading. positive values indicate its shorter to turn right to meet target heading
+	double targetHeadingDiff = diffAngles(worldRotY, m_targetHeading);
+	float turnRate = 0.5;
+	if (targetHeadingDiff >= 0)
+	{
+		//turn right
+		//setRotY(worldRotY + (m_turnRate*0.1));
+		m_rudderTarget = 0.45;
+	}
+	else
+	{
+		//turn left
+		//setRotY(worldRotY - (m_turnRate*0.1));
+		m_rudderTarget = -0.45;
+	}
+	
+	if (m_rudderTarget > m_rudder)
+	{
+		m_rudder = m_rudder + 0.05;
+	}
+	else if (m_rudderTarget <= m_rudder)
+	{
+		m_rudder = m_rudder - 0.05;
+	}
+
+	//set the submarine's rotation based on rudder direction and ship speed
+	float speedInfluence = 1.0;
+	if (m_currentSpeed < 3) speedInfluence = m_currentSpeed/3;
+	else if (m_currentSpeed > 10) speedInfluence = 10/(m_currentSpeed);
+	setRotY(worldRotY + (m_rudder*0.1*speedInfluence));
+
+	//==========================================
+	//depth related stuff
+	//==========================================
+	double depthDiff = worldPosY - m_targetDepth;
+	if (depthDiff < 0)
+	{
+		m_divePlanes = 0.5;
+	}
+	else
+	{
+		m_divePlanes = -0.5;
+	}
+
+	float depthSpeedInfluence = 1.0;
+	if (m_currentSpeed < 3) depthSpeedInfluence = m_currentSpeed/3;
+	//cout << "dive planes = " << m_divePlanes << "target depth = " << m_targetDepth << " depth = " << worldPosY << " depth diff=" << depthDiff << endl;
+
+	setPosY(worldPosY + (m_divePlanes*0.1*depthSpeedInfluence));
+	//cout << worldPosY << "+" << (m_divePlanes*0.1*depthSpeedInfluence) << "=" << (worldPosY + (m_divePlanes*0.1*depthSpeedInfluence)) << endl;
+
 }
 
 //returns a mostly unique id used for saving and loading based on the submarines's info

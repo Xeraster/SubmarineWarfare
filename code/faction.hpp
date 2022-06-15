@@ -134,10 +134,11 @@ faction* getFactionByName(string name)
 {
 	bool foundMatch = false;
 	int i = 0;
-	while (!foundMatch)
+	while (!foundMatch && i < factionDatabase->size())
 	{
 		if (factionDatabase->at(i).name() == name)
 		{
+			cout << "returning a faction" << endl;
 			foundMatch = true;
 		}
 		else
@@ -146,5 +147,10 @@ faction* getFactionByName(string name)
 		}
 	}
 
-	return &factionDatabase->at(i);
+	if (foundMatch) return &factionDatabase->at(i);
+	else 
+	{
+		cout << "not returning a faction " << endl;
+		return nullptr;
+	}
 }

@@ -711,6 +711,7 @@ dial :: dial(int size, int posX, int posY, int maxVal, SDL_Texture *texture, dou
 	m_degreesOfLastClick = 0;
 	m_minDegrees = minAngle;
 	m_maxDegrees = maxAngle;
+	m_dialTexture = generic_dial_needle;
 }
 
 dial :: dial(const dial& other)
@@ -727,6 +728,7 @@ dial :: dial(const dial& other)
 	m_degreesOfLastClick = 0;
 	m_minDegrees = other.minDegrees();
 	m_maxDegrees = other.maxDegrees();
+	m_dialTexture = other.getDialTexture();
 }
 
 dial& dial :: operator=(const dial& other)
@@ -743,8 +745,16 @@ dial& dial :: operator=(const dial& other)
 	m_degreesOfLastClick = 0;
 	m_minDegrees = other.minDegrees();
 	m_maxDegrees = other.maxDegrees();
+	m_dialTexture = other.getDialTexture();
 
 	return *this;
+}
+
+//allows you to set a value manually
+void dial :: setValue(double newValue)
+{
+	m_currentValue = newValue;
+	m_degreesOfLastClick = newValue;
 }
 
 double dial :: draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse)
@@ -790,14 +800,360 @@ double dial :: draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse)
 	int cx;
 	int cy;
 	getCenter(cx, cy);
-	SDL_QueryTexture(generic_dial_needle, NULL, NULL, &needlesizeX, &needlesizeY);
+	SDL_QueryTexture(m_dialTexture, NULL, NULL, &needlesizeX, &needlesizeY);
 
 	//scale the needle's size so that it's the correct size for whatever size the dial background is
 	needlesizeX = needlesizeX * (static_cast<double>(m_sizeY)/needlesizeY/static_cast<double>(1));
 	needlesizeY = needlesizeY * (static_cast<double>(m_sizeY)/needlesizeY/static_cast<double>(1));
 
-	renderTextureEx(generic_dial_needle, ren, cx - (needlesizeX / 2), cy - (needlesizeY/2), needlesizeX, needlesizeY, m_degreesOfLastClick);
+	renderTextureEx(m_dialTexture, ren, cx - (needlesizeX / 2), cy - (needlesizeY/2), needlesizeX, needlesizeY, m_degreesOfLastClick);
 
 
 	return m_currentValue;
+}
+
+markerPoint :: markerPoint()
+{
+
+}
+
+markerPoint :: markerPoint(double posX, double posY, int markerNum)
+{
+	m_worldPosX = posX;
+	m_worldPosY = posY;
+	m_caption = "mark #" + markerNum;
+}
+
+void markerPoint :: setPos(double x, double y)
+{
+	m_worldPosX = x;
+	m_worldPosY = y;
+}
+
+int markerPoint :: draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse, int correctX, int correctY, bool cursorHighlight)
+{
+
+	if (isColliding2D(correctX - 5, correctY - 5, 10, 10, mouseX, mouseY) && cursorHighlight)
+	{
+		drawLine(ren, color(100,100,100), correctX + 5, correctY - 5, correctX - 5, correctY + 5);
+		drawLine(ren, color(100,100,100), correctX + 5,correctY + 5, correctX - 5, correctY - 5);
+		return 1;
+	}
+	else
+	{
+		drawLine(ren, color(200,200,200), correctX + 5, correctY - 5, correctX - 5, correctY + 5);
+		drawLine(ren, color(200,200,200), correctX + 5,correctY + 5, correctX - 5, correctY - 5);
+		return 0;
+	}
+}
+
+markerPoint& markerPoint :: operator=(const markerPoint& other)
+{
+	m_worldPosX = other.posX();
+	m_worldPosY = other.posY();
+	m_caption = other.getCaption();
+
+	return *this;
+}
+
+rulerLine :: rulerLine()
+{
+	m_secondPointPlaced = false;
+}
+
+rulerLine :: rulerLine(double posX, double posY)
+{
+	m_worldPosX1 = posX;
+	m_worldPosY1 = posY;
+	m_secondPointPlaced = false;
+}
+
+rulerLine :: rulerLine(double posX1, double posY1, double posX2, double posY2)
+{
+	m_worldPosX1 = posX1;
+	m_worldPosY1 = posY2;
+	m_worldPosX2 = posX2;
+	m_worldPosY2 = posY2;
+	m_secondPointPlaced = true;
+
+	//how that all the important stuff has been set, calculate the length between 2 points and update the object
+	calculateDistance();
+}
+
+void rulerLine :: swapPoints()
+{
+	double tempX = m_worldPosX2;
+	double tempY = m_worldPosY2;
+	m_worldPosX2 = m_worldPosX1;
+	m_worldPosY2 = m_worldPosY1;
+	m_worldPosX1 = tempX;
+	m_worldPosY1 = tempY;
+
+	return void();
+}
+
+
+int rulerLine :: draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse, double zoom, double mapCenterX, double mapCenterY, double mapScale, int mapSizeX, int mapSizeY, bool lengthOnOtherEnd, bool cursorSelect)
+{
+	int stringSize;
+	if (zoom >= 1.0f) stringSize = 7;
+	else if (zoom < 1.0f && zoom >= 0.6f) stringSize = 6;
+	else if (zoom < 0.6f && zoom >= 0.3f) stringSize = 5;
+	else stringSize = 0;
+	if (!m_secondPointPlaced)
+	{
+		m_worldPosX2 = mapToWorldX(zoom, mapCenterX, mouseX);
+		m_worldPosY2 = mapToWorldY(zoom, mapCenterY, mouseY);
+		calculateDistance();
+
+		int x1 = worldToMapX(zoom, mapCenterX, m_worldPosX1*mapScale, mapSizeX, mapScale);
+		int x2 = worldToMapX(zoom, mapCenterX, m_worldPosX2*mapScale, mapSizeX, mapScale);
+		int y1 = worldToMapY(zoom, mapCenterY, m_worldPosY1*mapScale, mapSizeY, mapScale);
+		int y2 = worldToMapY(zoom, mapCenterY, m_worldPosY2*mapScale, mapSizeY, mapScale);
+
+		drawLine(ren, color(200,200,200), x1, y1, x2, y2);
+
+		if (lengthOnOtherEnd)
+		{
+			//make the length draw on the other side
+			x1 = x2;
+			y1 = y2;
+		}
+		drawText(ren, stringSize, color(200,200,200), doubleToMeters(m_length*mapScale), x1, y1);
+		if (isColliding2D(x1 - 5, y1 - 5, 10, 10, mouseX, mouseY) && cursorSelect)
+		{
+			return 1;
+		}
+	}
+	else
+	{
+		int x1 = worldToMapX(zoom, mapCenterX, m_worldPosX1*mapScale, mapSizeX, mapScale);
+		int x2 = worldToMapX(zoom, mapCenterX, m_worldPosX2*mapScale, mapSizeX, mapScale);
+		int y1 = worldToMapY(zoom, mapCenterY, m_worldPosY1*mapScale, mapSizeY, mapScale);
+		int y2 = worldToMapY(zoom, mapCenterY, m_worldPosY2*mapScale, mapSizeY, mapScale);
+
+		drawLine(ren, color(200,200,200), x1, y1, x2, y2);
+		if (lengthOnOtherEnd)
+		{
+			//make the length draw on the other side
+			//int tempx = x1;
+			//int tempy = y1;
+			x1 = x2;
+			y1 = y2;
+			//x2 = x1;
+			//y2 = y1;
+		}
+		drawText(ren, stringSize, color(200,200,200), doubleToMeters(m_length*mapScale), x1, y1);
+
+		if ((isColliding2D(x1 - 5, y1 - 5, 10, 10, mouseX, mouseY) || isColliding2D(x2 - 5, y2 - 5, 10, 10, mouseX, mouseY)) && cursorSelect)
+		{
+			return 1;
+		}
+	}
+
+
+	return 0;
+}
+
+void rulerLine :: calculateDistance()
+{
+	double a_squared = pow(m_worldPosX1 - m_worldPosX2, 2);
+	double b_squared = pow(m_worldPosY1 - m_worldPosY2, 2);
+
+	m_length = sqrt(a_squared + b_squared);
+
+	return void();
+}
+
+rulerLine& rulerLine :: operator=(const rulerLine& other)
+{
+	m_worldPosX1 = other.posX1();
+	m_worldPosX2 = other.posX2();
+	m_worldPosY1 = other.posY1();
+	m_worldPosY2 = other.posY2();
+	m_secondPointPlaced = other.secondPointPlaced();
+	m_length = other.distance();
+
+	return *this;
+}
+
+protractorAngle :: protractorAngle()
+{
+	m_secondLinePlaced = false;
+}
+
+protractorAngle :: protractorAngle(double posX1, double posY1)
+{
+	m_firstLine = rulerLine(posX1, posY1);
+	m_secondLinePlaced = false;
+}
+
+int protractorAngle :: draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse, double zoom, double mapCenterX, double mapCenterY, double mapScale, int mapSizeX, int mapSizeY, bool cursorSelect)
+{
+	bool l1col = false;
+	bool l2col = false;
+	int stringSize;
+	if (zoom >= 1.0f) stringSize = 7;
+	else if (zoom < 1.0f && zoom >= 0.6f) stringSize = 6;
+	else if (zoom < 0.6f && zoom >= 0.3f) stringSize = 5;
+	else stringSize = 0;
+
+	l1col = m_firstLine.draw(ren, mouseX, mouseY, lastMouse, zoom, mapCenterX, mapCenterY, mapScale, mapSizeX, mapSizeY, false, cursorSelect);
+	if (!firstLinePlaced()) 
+	{
+		calculateAngle();
+		double anglePosX = worldToMapX(zoom,mapCenterX, m_firstLine.posX1()*mapScale, mapSizeX, mapScale);
+		double anglePosY = worldToMapY(zoom,mapCenterY, (m_firstLine.posY1())*mapScale, mapSizeY, mapScale)-20;
+		drawText(ren, stringSize, color(200,200,200), to_string(m_angle), anglePosX, anglePosY);
+	}
+	if (m_firstLine.secondPointPlaced())
+	{
+		if (!m_secondLine.secondPointPlaced()) calculateAngle();
+		//m_secondLine.swapPoints();
+		double anglePosX = worldToMapX(zoom,mapCenterX, m_firstLine.posX2()*mapScale, mapSizeX, mapScale);
+		double anglePosY = worldToMapY(zoom,mapCenterY, m_firstLine.posY2()*mapScale, mapSizeY, mapScale);
+		l2col = m_secondLine.draw(ren, mouseX, mouseY, lastMouse, zoom, mapCenterX, mapCenterY, mapScale, mapSizeX, mapSizeY, true, cursorSelect);
+		drawText(ren, stringSize, color(200,200,200), to_string(m_angle), anglePosX, anglePosY);
+		//m_secondLine.swapPoints();
+	}
+
+	if (l1col || l2col) return 1;
+	else return 0;
+}
+
+void protractorAngle :: protractorAngle :: calculateAngle()
+{
+	//doesn't work (not even close)
+	//double length1 = m_firstLine.distance();
+	//double length2 = m_secondLine.distance();
+	//m_angle = tan(length1/length2);
+	//cout << "angle = " << m_angle << endl;
+
+	//doesn't work
+	/*float dx21 = m_firstLine.posX2()-m_firstLine.posX1();
+	float dx31 = m_secondLine.posX2()-m_firstLine.posX1();
+	float dy21 = m_firstLine.posY2()-m_firstLine.posY1();
+	float dy31 = m_secondLine.posY2()-m_firstLine.posY1();
+	float m12 = sqrt( dx21*dx21 + dy21*dy21 );
+	float m13 = sqrt( dx31*dx31 + dy31*dy31 );
+	float theta = acos( (dx21*dx31 + dy21*dy31) / (m12 * m13) );
+	m_angle = theta * 180.0 / 3.1415926535897932384626; //make sure to use enough digits of pi*/
+
+	//this works but there's no way to display more than 90 degree angles without doing a LOT of if statements and first finding what conditions point 1, 2 and 3 would have to do in order to make it calculatable.
+	//if I had weed, I would do this but I don't, so I don't have the patience for that so I'm finding a different solution
+	//calculate the slopes of each line
+	/*double m1 = (m_firstLine.posX2() - m_firstLine.posX1())/(m_firstLine.posY2() - m_firstLine.posY1());
+	double m2 = (m_secondLine.posX2() - m_secondLine.posX1())/(m_secondLine.posY2() - m_secondLine.posY1());
+	double m3 = (m_firstLine.posX1() - m_firstLine.posX2())/(m_firstLine.posY1() - m_firstLine.posY2());
+	double m4 = (m_secondLine.posX1() - m_secondLine.posX2())/(m_secondLine.posY1() - m_secondLine.posY2());
+	double val1 = (1+m1*m2);
+	double val2 =  m2-m1;
+	double val3 = (1-m3*m4);
+	double val4 =  m4-m3;
+	double theta = atan((val2/val1)) * 180 / 3.1415926535897932384626;
+	double theta2 = atan((val4/val3)) * 180 / 3.1415926535897932384626;
+	m_angle = theta;
+	cout << "theta = " << 180-(theta) << " theta 2 = " << theta2 << endl;*/
+	if (firstLinePlaced())
+	{
+		double angle = angleBetweenLinesInRadians(m_firstLine, m_secondLine);
+		if (angle >= 180) m_angle = angle - 180;
+		else if (angle < 180) m_angle = 180 - angle;
+	}
+	else
+	{
+		/*double m1 = (m_firstLine.posX2() - m_firstLine.posX1())/(m_firstLine.posY2() - m_firstLine.posY1());
+		double m2 = ((m_firstLine.posX1()) - m_firstLine.posX1())/((m_firstLine.posY1()+5) - m_firstLine.posY1());
+
+		double val1 = (1+m1*m2);
+		double val2 =  m2-m1;
+		double angle = atan((val2/val1)) * 180 / 3.1415926535897932384626;*/
+		rulerLine tempLine(m_firstLine.posX1(), m_firstLine.posY1(), m_firstLine.posX1(), m_firstLine.posY1() + 10);
+		double angle = angleBetweenLinesInRadians(m_firstLine, tempLine);
+		angle += 270;
+		if (angle >= 360) angle = angle - 360;
+		//else if (angle < 180) m_angle = 180 - angle;
+		m_angle = angle;
+
+	}
+
+	//attempt 4.. maybe a double dot product then get the difference of the 2 of them?
+	//nope. Doesn't function as the internet claimed it does. Does not seem to calculate angles
+	//double dot = (m_firstLine.posX2() * m_secondLine.posX2())
+	/*double x1 = m_firstLine.posX1();
+	double x2 = m_firstLine.posX2();
+	double x3 = m_secondLine.posX2();
+	double y1 = m_firstLine.posY1();
+	double y2 = m_firstLine.posY2();
+	double y3 = m_secondLine.posY2();
+
+	double dot1 = x1*x2 + y1*y2;
+	double det1 = x1*y2 - y1*x2;
+	double angle1 = atan2(det1, dot1) * 180 / 3.1415926535897932384626;
+
+	double dot2 = x3*x2 + y3*y2;
+	double det2 = x3*y2 - y3*x2;
+	double angle2 = atan2(det2, dot2) * 180 / 3.1415926535897932384626;
+	cout << "angle1 = " << angle1 << " angle 2 = " << angle2 << endl;*/
+
+
+}
+
+protractorAngle& protractorAngle :: operator=(const protractorAngle& other)
+{
+	m_firstLine = other.getFirstLine();
+	m_secondLine = other.getSecondLine();
+	m_angle = other.getAngle();
+	m_secondLinePlaced = m_secondLine.secondPointPlaced();
+
+	return *this;
+}
+
+compassCircle :: compassCircle()
+{
+
+}
+
+compassCircle :: compassCircle(double posX, double posY)
+{
+	//use the line's built-in constructor to create a new line in a hopefully non-buggy way
+	m_theLine = rulerLine(posX, posY);
+}
+
+int compassCircle :: draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse, double zoom, double mapCenterX, double mapCenterY, double mapScale, int mapSizeX, int mapSizeY, bool cursorSelect)
+{
+	bool collision = false;
+	if (m_theLine.draw(ren, mouseX, mouseY, lastMouse, zoom, mapCenterX, mapCenterY, mapScale, mapSizeX, mapSizeY, false, cursorSelect))
+	{
+		collision = true;
+	}
+	
+	double x = worldToMapX(zoom, mapCenterX, m_theLine.posX1()*mapScale, mapSizeX, mapScale);
+	double y = worldToMapY(zoom, mapCenterY, m_theLine.posY1()*mapScale, mapSizeY, mapScale);
+	drawEmptyCircle(ren, color(200,200,200), m_theLine.distance()*zoom, x, y);
+
+	return collision;
+}
+
+compassCircle& compassCircle :: operator=(const compassCircle& other)
+{
+	m_theLine = other.getLine();
+
+	return *this;
+}
+
+//it actually outputs in degrees not radians
+double angleBetweenLinesInRadians(rulerLine line1, rulerLine line2)
+{
+	double angle1 = atan2(line1.posY1()-line1.posY2(), line1.posX2()-line1.posX1());
+	double angle2 = atan2(line2.posY1()-line2.posY2(), line2.posX2()-line2.posX1());
+
+	double result = (angle2-angle1) * 180 / 3.14;
+	if (result<0) 
+	{
+    	result+=360;
+	}
+	
+	return result;
+
 }

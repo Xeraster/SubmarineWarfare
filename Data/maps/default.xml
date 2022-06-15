@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<map>
+	<recommended_heightmap>heightmap4096.bmp</recommended_heightmap>
+
+	<ports>
+		<port>
+			<name>Seameet</name>
+			<owning_faction>Federation</owning_faction>
+			<posx>1024.0</posx>
+			<posy>-1000.0</posy>
+			<has_airport>false</has_airport>
+			<has_shipyard>true</has_shipyard>
+			<naval_traffic>2.0</naval_traffic>
+			<merchant_traffic>1.2</merchant_traffic>
+			<air_traffic>0.0</air_traffic>
+			<submarine_traffic>1.2</submarine_traffic>
+			<population>2000</population>
+		</port>
+		<port>
+			<name>Ironhaven</name>
+			<owning_faction>Federation</owning_faction>
+			<posx>1047.0</posx>
+			<posy>-1413.0</posy>
+			<has_airport>true</has_airport>
+			<has_shipyard>true</has_shipyard>
+			<naval_traffic>0.8</naval_traffic>
+			<merchant_traffic>2.1</merchant_traffic>
+			<air_traffic>0.8</air_traffic>
+			<submarine_traffic>0.2</submarine_traffic>
+			<population>15000</population>
+		</port>
+
+		<!-- pirate ports -->
+		<port>
+			<name>Foolshope</name>
+			<owning_faction>Pirates</owning_faction>
+			<posx>145.0</posx>
+			<posy>-162.0</posy>
+			<has_airport>false</has_airport>
+			<has_shipyard>true</has_shipyard>
+			<naval_traffic>1.8</naval_traffic>
+			<merchant_traffic>1.1</merchant_traffic>
+			<air_traffic>0.0</air_traffic>
+			<submarine_traffic>0.2</submarine_traffic>
+			<population>1200</population>
+		</port>
+
+		<!-- misc bad guys or something idk. I just realized the "enemy" factions I have are pretty weak and lame -->
+
+		<port>
+			<name>Arnoawich</name>
+			<owning_faction>China</owning_faction>
+			<posx>683.0</posx>
+			<posy>1567</posy>
+			<has_airport>true</has_airport>
+			<has_shipyard>true</has_shipyard>
+			<naval_traffic>5.8</naval_traffic>
+			<merchant_traffic>9.1</merchant_traffic>
+			<air_traffic>2.0</air_traffic>
+			<submarine_traffic>1.2</submarine_traffic>
+			<population>1023441</population>
+		</port>
+		<port>
+			<name>Ampleforth</name>
+			<owning_faction>Rouge Amish</owning_faction>
+			<posx>-1541.0</posx>
+			<posy>1605</posy>
+			<has_airport>false</has_airport>
+			<has_shipyard>true</has_shipyard>
+			<naval_traffic>1.8</naval_traffic>
+			<merchant_traffic>2.1</merchant_traffic>
+			<air_traffic>0.0</air_traffic>
+			<submarine_traffic>0.0</submarine_traffic>
+			<population>3487</population>	
+		</port>
+	</ports>
+</map>

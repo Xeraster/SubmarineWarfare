@@ -2,6 +2,7 @@
 #define BUTTON_H
 
 SDL_Texture *generic_dial_needle;
+SDL_Texture *compass_dial_needle;
 
 class button
 {
@@ -324,7 +325,9 @@ public:
 	double maxDegrees() const { return m_maxDegrees; }
 
 	SDL_Texture* getTexture() const { return m_elementTexture; }
+	SDL_Texture* getDialTexture() const { return m_dialTexture; }
 	void setTexture(SDL_Texture *newTexture) { m_elementTexture = newTexture; }
+	void setNeedleTexture(SDL_Texture *newTexture) { m_dialTexture = newTexture; }
 
 	int getRadius() const { return m_radius; }
 	void setRadius(int newValue) { m_radius = newValue; m_sizeY = m_radius*2; m_sizeX = m_radius*2; }
@@ -332,6 +335,8 @@ public:
 	void getCenter(int &x, int &y) { y = m_posY + m_radius; x = m_posX + m_radius; }
 
 	double value() const { return m_currentValue; }
+	//allows you to set a value manually
+	void setValue(double newValue);
 	double degrees() const { return m_degreesOfLastClick; }
 
 	double draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastmouse);
@@ -350,10 +355,124 @@ private:
 	int m_radius;
 	color m_dialColor;
 	SDL_Texture *m_elementTexture;
+	SDL_Texture *m_dialTexture;
 
 	double m_currentValue;
 	double m_degreesOfLastClick;
 };
+
+//ui elements intended for use in map view
+//boy, do I sure love programming ui crap /s
+
+class markerPoint
+{
+public:
+	markerPoint();
+	markerPoint(double posX, double posY, int markerNum);
+
+	void setPos(double x, double y);
+	double posX() const { return m_worldPosX; }
+	double posY() const { return m_worldPosY; }
+	string getCaption() const { return m_caption; }
+
+	//returns 0 if mouse not touching. returns 1 if mouse touching. This is intended to be used for deleting from map view
+	int draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse, int correctX, int correctY, bool cursorHighlight = false);
+
+	markerPoint& operator=(const markerPoint& other);
+
+private:
+	double m_worldPosX;
+	double m_worldPosY;
+	string m_caption;
+};
+
+class rulerLine
+{
+public:
+	rulerLine();
+	rulerLine(double posX, double posY);
+	rulerLine(double posX1, double posY1, double posX2, double posY2);
+
+	double posX1() const { return m_worldPosX1; }
+	double posX2() const { return m_worldPosX2; }
+	double posY1() const { return m_worldPosY1; }
+	double posY2() const { return m_worldPosY2; }
+	bool secondPointPlaced() const { return m_secondPointPlaced; }
+	double distance() const { return m_length; }
+
+	void setFirstPoint(double x, double y) { m_worldPosX1 = x; m_worldPosY1 = y; }
+	void setSecondPoint(double x, double y) { m_worldPosX2 = x; m_worldPosY2 = y; m_secondPointPlaced = true; }
+	void swapPoints();
+
+	//returns 0 if mouse not touching. returns 1 if mouse touching. This is intended to be used for deleting from map view
+	int draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse, double zoom, double mapCenterX, double mapCenterY, double mapScale, int mapSizeX, int mapSizeY, bool lengthOnOtherEnd = false, bool cursorSelect = false);
+
+	rulerLine& operator=(const rulerLine& other);
+protected:
+	double m_worldPosX1;
+	double m_worldPosY1;
+	double m_worldPosX2;
+	double m_worldPosY2;
+	bool m_secondPointPlaced;
+	double m_length;
+
+	void calculateDistance();
+};
+
+class protractorAngle
+{
+public:
+	protractorAngle();
+	protractorAngle(double posX1, double posY1);
+
+	double posX1() const { return m_firstLine.posX1(); }
+	double posY1() const { return m_firstLine.posY1(); }
+
+	double posX2() const { return m_firstLine.posX2(); }
+	double posY2() const { return m_firstLine.posY2(); }
+
+	double posX3() const { return m_secondLine.posX1(); }
+	double posY3() const { return m_secondLine.posX1(); }
+
+	bool firstLinePlaced() const { return m_firstLine.secondPointPlaced(); }
+	bool secondLinePlaced() const { return m_secondLine.secondPointPlaced(); }
+	double getAngle() const { return m_angle; }
+
+	rulerLine getFirstLine() const { return m_firstLine; }
+	rulerLine getSecondLine() const { return m_secondLine; }
+
+	void setFirstLineSecondPoint(double x, double y) { m_firstLine.setSecondPoint(x,y); m_secondLine.setFirstPoint(x, y); }
+	void setSecondLineSecondPoint(double x, double y) { m_secondLine.setSecondPoint(x,y); m_secondLinePlaced = true; calculateAngle(); }
+
+	//returns 0 if mouse not touching. returns 1 if mouse touching. This is intended to be used for deleting from map view
+	int draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse, double zoom, double mapCenterX, double mapCenterY, double mapScale, int mapSizeX, int mapSizeY, bool cursorSelect = false);
+
+	protractorAngle& operator=(const protractorAngle& other);
+protected:
+	rulerLine m_firstLine;
+	rulerLine m_secondLine;
+	double m_angle;
+	bool m_secondLinePlaced;
+
+	void calculateAngle();
+};
+
+class compassCircle
+{
+public:
+	compassCircle();
+	compassCircle(double posX, double posY);
+	rulerLine getLine() const { return m_theLine; }
+
+	//returns 0 if mouse not touching. returns 1 if mouse touching. This is intended to be used for deleting from map view
+	int draw(SDL_Renderer *ren, int mouseX, int mouseY, Uint32 lastMouse, double zoom, double mapCenterX, double mapCenterY, double mapScale, int mapSizeX, int mapSizeY, bool cursorSelect = false);
+	compassCircle& operator=(const compassCircle& other);
+	rulerLine m_theLine;
+private:
+};
+
+//it actually outputs in degrees not radians
+double angleBetweenLinesInRadians(rulerLine line1, rulerLine line2);
 
 extern SDL_Event testEvent;
 extern bool exitGame;

@@ -34,16 +34,27 @@ public:
 	int getNumFloodableComps() const { return m_numFloodableCompartments; }
 	int pathingPreference() const { return m_pathfinding; }
 	double getTonnage() const { return m_tonnage; }
+	int getShipType() const { return m_shipType; }
 
-	void setPosX(int x) { worldPosX = x; m_shipMesh.posX = x; }
-	void setPosY(int y) { worldPosY = y; m_shipMesh.posY = y; }
-	void setPosZ(int z) { worldPosZ = z; m_shipMesh.posZ = z; }
-	void setRotX(int hdg) { worldRotX = hdg; m_shipMesh.rotX = hdg; }
-	void setRotY(int hdg) { worldRotY = hdg; m_shipMesh.rotY = hdg; }
-	void setRotZ(int hdg) { worldRotZ = hdg; m_shipMesh.rotZ = hdg; }
+	void setPosX(double x) { worldPosX = x; m_shipMesh.posX = x; }
+	void setPosY(double y) { worldPosY = y; m_shipMesh.posY = y; }
+	void setPosZ(double z) { worldPosZ = z; m_shipMesh.posZ = z; }
+	void setRotX(double hdg) { worldRotX = hdg; m_shipMesh.rotX = hdg; }
+	void setRotY(double hdg) { worldRotY = hdg; m_shipMesh.rotY = hdg; }
+	void setRotZ(double hdg) { worldRotZ = hdg; m_shipMesh.rotZ = hdg; }
+
+	double getSpeed() const { return m_currentSpeed; }
+	void setSpeed(double newSpeed, bool alsoSetTargetSpeed = true) { m_currentSpeed = newSpeed; if (alsoSetTargetSpeed) m_targetSpeed = newSpeed; }
+	double getTargetSpeed() const { return m_targetSpeed; }
+	void setTargetSpeed(double newTargetSpeed) { m_targetSpeed = newTargetSpeed; }
+	double getTargetHeading() const { return m_targetHeading; }
+	void setTargetHeading(double target) { m_targetHeading = target; }
+
+	void physicsTick();
 
 	//these more complicated and involved variables are being made fully public because they get used a lot and I'm sick and tired of typing getters and setters over and over in my shitty text editor, forgetting their names and then having to switch back and forth between windows
 	//that's like that I spend 90% of my time doing. It sucks
+	//pro-tip: use an ide. vscode for example or something with code completion or "intellisense".
 	double worldPosX;
 	double worldPosY;
 	double worldPosZ;
@@ -77,10 +88,16 @@ private:
 	double m_length;
 	double m_beam;
 	double m_draft;
+	int m_shipType; //0 = merchant. 1 = warship. 2 = natural (e.g. a whale, iceberg, cthulu)
 
 	int m_numFloodableCompartments;
 	int m_pathfinding; 		//here does the ship prefer to pathfind? 0 = coastal. 1 = deep ocean. 2 = no preference
 	double m_tonnage;
+
+	//in-game/pysics related stuff
+	double m_currentSpeed;
+	double m_targetSpeed;
+	double m_targetHeading;
 
 
 };

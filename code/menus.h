@@ -172,8 +172,12 @@ bool freeCameraView = false;
 SDL_Texture *depthMeterSmall;
 SDL_Texture *throttleTexture;
 SDL_Texture *compassTexture;
+SDL_Texture *displayCompassTexture;
 SDL_Texture *periscope_viewport;
 dial depthMeterDial;
+dial throttleDial;
+dial headingDial;
+dial headingDisplayDial;
 
 SDL_Texture *periscopeButtonTexture;
 SDL_Texture *mapViewTexture;

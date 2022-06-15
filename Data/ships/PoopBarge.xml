@@ -27,6 +27,6 @@
 
 	<!-- where does the ship prefer to pathfind? 0 = coastal. 1 = deep ocean. 2 = no preference -->
 	<pathfinding>0</pathfinding>
-	<tonnage>20</tonnage>
+	<tonnage>25</tonnage>
 
 </Ship>

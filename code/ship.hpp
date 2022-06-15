@@ -21,6 +21,7 @@ ship :: ship(XMLElement *shipElement)
 	m_meshName = shipElement->FirstChildElement("mesh")->GetText();
 
 	m_tier = atoi(shipElement->FirstChildElement("tier")->GetText());
+	m_shipType = atoi(shipElement->FirstChildElement("type")->GetText());
 	m_topSpeed = atof(shipElement->FirstChildElement("top_speed")->GetText());
 	m_acceleration = atof(shipElement->FirstChildElement("acceleration")->GetText());
 	m_turnRate = atof(shipElement->FirstChildElement("turn_rate")->GetText());
@@ -35,10 +36,63 @@ ship :: ship(XMLElement *shipElement)
 	m_numFloodableCompartments = atoi(shipElement->FirstChildElement("flood_compartments")->GetText());
 	m_pathfinding = atof(shipElement->FirstChildElement("pathfinding")->GetText());
 	m_tonnage = atoi(shipElement->FirstChildElement("tonnage")->GetText());
+
+	m_targetSpeed = 0;
+	m_currentSpeed = 0;
+	m_targetHeading = 0;
 }
 
 ship :: ~ship()
 {
+	
+}
+
+void ship :: physicsTick()
+{
+	//make ship go in a direction based on speed
+	//1 knot = 0.5144444 meters per second or 0.008574074 meters per frame (at a target rate of 60fps)
+	double dx = sin(worldRotY * (3.141592/180)) * (m_currentSpeed * 0.008574074) * -1;
+	double dy = cos(worldRotY * (3.141592/180)) * (m_currentSpeed * 0.008574074);
+	//cout << "ships heading is " << worldRotY << endl;
+
+	//append speed to ship world position
+	worldPosX = dx + worldPosX;
+	worldPosZ = dy + worldPosZ;
+	setPosX(worldPosX); 		//this is inverted for some reason
+	setPosZ(worldPosZ);
+	//cout << "ship position is " << worldPosX << ", " << worldPosZ << ". speed = " << m_currentSpeed << endl;
+
+	//get difference between 2 angles to figure out which direction the ship needs to steer to get to its target heading
+	//negative means its shorter to turn left to meet target heading. positive values indicate its shorter to turn right to meet target heading
+	double targetHeadingDiff = diffAngles(worldRotY, m_targetHeading);
+	if (targetHeadingDiff >= 0)
+	{
+		//turn right
+		setRotY(worldRotY + (m_turnRate*0.1));
+	}
+	else
+	{
+		//turn left
+		setRotY(worldRotY - (m_turnRate*0.1));
+	}
+
+	float targetSpeedDiff = m_targetSpeed - m_currentSpeed;
+	if (targetSpeedDiff >= 0 && m_currentSpeed <= m_topSpeed)
+	{
+		//if speed is less than target speed, speed up
+		//based on almost nothing, this should mean a poopbarge with an acceleration of 0.3 should accelerate at 0.3*60*0.05=0.9 knots per second
+		//it would take 13.333 seconds for a poop barge to accelerate to its top speed of 12 knots
+		setSpeed(m_currentSpeed + (m_acceleration*0.05), false);
+		//cout << "ship is speeding up. current speed= " << m_currentSpeed << endl;
+	}
+	else
+	{
+		//if speed is more than target speed, slow down using same mechanics as speeding up. In the future this will change to something more realistic
+		setSpeed(m_currentSpeed - (m_acceleration*0.05), false);
+		//cout << "ship is slowing down. current speed= " << m_currentSpeed << endl;
+	}
+	//cout << "speed diff = " << targetSpeedDiff << endl;
+	//cout << "target speed = " << m_targetSpeed << endl;
 
 }
 
@@ -82,6 +136,10 @@ ship& ship :: operator=(ship& other)
 	m_numFloodableCompartments = other.getNumFloodableComps();
 	m_pathfinding = other.pathingPreference();
 	m_tonnage = other.getTonnage();
+	m_shipType = other.getShipType();
+	m_currentSpeed = other.getSpeed();
+	m_targetSpeed = other.getTargetSpeed();
+	m_targetHeading = other.getTargetHeading();
 
 	return *this;
 }
